@@ -1,18 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 import Nav from "./components/Header/Nav/Nav"
-import '../../assets/css/admin/assets/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css'
-import '../../assets/css/admin/assets/bower_components/select2/css/select2.min.css'
-import '../../assets/css/admin/assets/dist/css/skins/skin-blue.min.css'
-import '../../assets/css/admin/assets/dist/css/skins/skin-yellow.min.css'
-import '../../assets/css/admin/assets/bower_components/bootstrap-datetimepicker/bootstrap-datetimepicker.min.css'
-import '../../assets/css/admin/assets/bower_components/pace/pace-theme-flash.css'
-import '../../assets/css/admin/assets/bower_components/datatables.net-bs/plugins/Buttons-1.5.6/css/buttons.bootstrap.min.css'
-import '../../assets/css/admin/assets/dist/css/mystyle.css'
-import '../../assets/css/admin/assets/bower_components/codemirror/lib/codemirror.min.css'
-import '../../assets/css/admin/assets/bower_components/froala_editor/css/froala_editor.pkgd.min.css'
-import '../../assets/css/admin/assets/bower_components/froala_editor/css/froala_style.min.css'
-import '../../assets/css/admin/assets/bower_components/froala_editor/css/themes/royal.min.css'
 import DataTable from 'datatables.net-dt';
 import 'datatables.net-dt/css/jquery.dataTables.css'
 import $ from 'jquery';
@@ -23,6 +11,8 @@ import { Link } from "react-router-dom"
 import Swal from 'sweetalert2';
 import { ToastContainer, toast } from 'react-toastify';
 import userP from '../../assets/images/admin.png'
+
+
 const Students = () => {
   const tableRef = useRef(null);
   const [loading, setLoading] = useState(true);
@@ -272,7 +262,8 @@ const Students = () => {
               <div className="mt-2 mb-4">
                 <Link to={"/student/add"}><button type="button" className="btn btn-sm bg-blue btn-flat"><i className="fa fa-plus"></i> Add Data</button></Link>
                 <Link to={"student/import"} className="btn btn-sm btn-flat btn-success disabled ml-3"><i className="fa fa-upload"></i> Import</Link>
-                  <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
+                  <div className="pimport { CFormSelect } from '@coreui/react/src/components/form/CFormSelect';
+ull-right insiderBox" id="iz" style={{ display: "none" }}>
                     <button id="delete__Btn" title="Delete This Student" className="mr-4 btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
                     <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: "#000000", borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
                   </div>

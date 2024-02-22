@@ -13,6 +13,7 @@ import DepartmentList from './../ui/dashboard/DepartmentList';
 import User from '../ui/dashboard/Profile/User';
 import ProfessorsList from '../ui/dashboard/ProfessorsList';
 import AddNewProfessor from '../ui/dashboard/AddNewProfessor';
+import FileUploadForm from '../ui/dashboard/FileUploadForm';
 
 const GetUserInfo = localStorage.getItem('appData');
 // Parse the JSON string to an object
@@ -64,6 +65,7 @@ const App = () => {
                 <Route path='/professors' element={<AUTHENTICATED_USER><ProfessorsList /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/users' element={<AUTHENTICATED_USER><User /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/professor/add_professor' element={<AUTHENTICATED_USER><AddNewProfessor /></AUTHENTICATED_USER>}> </Route>
+                <Route path='/file' element={<AUTHENTICATED_USER><FileUploadForm /></AUTHENTICATED_USER>}> </Route>
                 
                 <Route path='/auth/login' element={<PublicRoute><Login /></PublicRoute>}> </Route>
             </Routes>

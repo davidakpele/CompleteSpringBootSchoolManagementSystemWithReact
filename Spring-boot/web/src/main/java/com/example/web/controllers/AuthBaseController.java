@@ -3,9 +3,7 @@ package com.example.web.controllers;
 import com.example.web.RequestsBody.*;
 import com.example.web.auth.AuthenticationService;
 import com.example.web.exceptions.ErrorResponse;
-import com.example.web.mapstruct.CategoriesDTO;
-import com.example.web.mapstruct.ProfessorsDTO;
-import com.example.web.mapstruct.StudentsDTOs;
+import com.example.web.mapstruct.*;
 import com.example.web.model.*;
 import com.example.web.repository.ProfessorRepository;
 import com.example.web.responses.ArrayListResponse;
@@ -16,9 +14,18 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,19 +39,23 @@ public class AuthBaseController {
     private final CategoryDetailsServices categoryDetailsServices;
     private final FacultiesService facultiesService;
     private final DepartmentsService departmentsService;
+    private final ResourceLoader resourceLoader;
     private final AuthenticationService service;
     private final ProfessorRepository professorRepository;
+    private final ManagementRoleService managementRoleService;
     private final Logger logger = LoggerFactory.getLogger(AuthBaseController.class);
     private static final String EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$";
-    public AuthBaseController(StudentDetailsService studentDetailsService, ProfessorDetailsService professorDetailsService, SuperUserDetailsService superUserDetailsService, CategoryDetailsServices categoryDetailsServices, FacultiesService facultiesService, DepartmentsService departmentsService, AuthenticationService service, ProfessorRepository professorRepository) {
+    public AuthBaseController(StudentDetailsService studentDetailsService, ProfessorDetailsService professorDetailsService, SuperUserDetailsService superUserDetailsService, CategoryDetailsServices categoryDetailsServices, FacultiesService facultiesService, DepartmentsService departmentsService, ResourceLoader resourceLoader, AuthenticationService service, ProfessorRepository professorRepository,ManagementRoleService managementRoleService) {
         this.studentDetailsService = studentDetailsService;
         this.professorDetailsService = professorDetailsService;
         this.superUserDetailsService = superUserDetailsService;
         this.categoryDetailsServices = categoryDetailsServices;
         this.facultiesService = facultiesService;
         this.departmentsService = departmentsService;
+        this.resourceLoader = resourceLoader;
         this.service = service;
         this.professorRepository = professorRepository;
+        this.managementRoleService = managementRoleService;
     }
 
     @GetMapping("/collections/count")
@@ -296,7 +307,83 @@ public class AuthBaseController {
         professorDetailsService.deleteProfessor(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-    
+
+    @GetMapping("/professor/{professorId}")
+    public ResponseEntity<ProfessorsDTO> getProfessorById(@PathVariable Long professorId) {
+        if (professorId == null) {
+            throw new IllegalArgumentException("Professor ID cannot be null or empty");
+        }
+        try {
+            Long parsedProfessorId = Long.parseLong(String.valueOf(professorId));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid student ID format. Must be an integer");
+        }
+        ProfessorsDTO professorsDTO = professorDetailsService.getProfessorWithRecordsById(professorId);
+        if (professorsDTO == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(professorsDTO, HttpStatus.OK);
+
+    }
+
+    @PutMapping("/professor/update/{professorId}")
+    public ResponseEntity<Boolean>  updateProfessorAndRecordsById(@PathVariable Long professorId,  @RequestBody ProfessorRequestBody request) {
+
+        boolean updateResult = professorDetailsService.updateProfessorAndRecordsById(professorId, request);
+
+        return new ResponseEntity<>(updateResult, HttpStatus.OK);
+    }
+
+    @GetMapping("/professor/withCategories/{professorId}")
+    public  ResponseEntity<?> getProfessorWithCategories(@PathVariable Long professorId) {
+        if (managementRoleService.doesProfessorExist(professorId)) {
+            // If professor exists in ManagementRole, fetch the corresponding row
+            ManagementRole managementRole = managementRoleService.getManagementRoleByProfessorId(professorId);
+            String  departmentIdRow = managementRole.getDepartmentId();
+            String categoryIdRow = managementRole.getCategoryId();
+            String facultyIdRow = managementRole.getFacultyId();
+            String designationSessionRow = managementRole.getDesignation();
+            String[] departmentIdArray = departmentIdRow.split(",");
+            // Convert the string array to a list of Longs
+            List<Long> departmentIdList = Arrays.stream(departmentIdArray)
+                    .map(Long::valueOf)
+                    .collect(Collectors.toList());
+            List<Categories> categories = categoryDetailsServices.findAllCategoriesWithFeatures();
+            List<Departments> departments = departmentsService.findDepartmentsByIdIn(departmentIdList);
+            ProfessorRecords professorRecords = professorDetailsService.findByProfessorId(professorId)
+                    .orElseThrow(() -> new EntityNotFoundException("ProfessorRecords not found with ID: " + professorId));
+
+            // Construct AppointedProfessorWithRoleDetails
+            AppointedProfessorWithRoleDetails appointedProfessorDetails = new AppointedProfessorWithRoleDetails(
+                    professorId,
+                    professorRecords.getSurname(),
+                    professorRecords.getFirstname(),
+                    categories,
+                    managementRole.getCategoryId(),
+                    managementRole.getFacultyId(),
+                    departments,
+                    managementRole.getDesignation(),
+                    true
+            );
+
+            return ResponseEntity.ok(appointedProfessorDetails);
+        }else {
+            // If professor doesn't exist in ManagementRole, fetch from ProfessorDetails
+            ProfessorWithCategoriesDTO professorWithCategoriesDTO = professorDetailsService.getProfessorWithCategoriesById(professorId);
+            return ResponseEntity.ok(professorWithCategoriesDTO);
+        }
+    }
+
+    @PostMapping("/professor/appoint")
+    public ResponseEntity<?> appointProfessor(@RequestBody ManagementRoleDTO managementRoleDTO) {
+        try {
+            managementRoleService.appointProfessor(managementRoleDTO);
+            return ResponseEntity.ok(HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error appointing professor");
+        }
+    }
+
     private boolean checkIfEmailAlreadyExists(String email) {
         return professorDetailsService.checkIfEmailAlreadyBeenUsed(email);
     }

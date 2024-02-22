@@ -3,12 +3,12 @@ import  { Component } from 'react';
 import api from '../api/axios'
 import $ from 'jquery'
 
-class Services extends Component{
+class Services extends Component {
      
     FetechFacultiesBaseOnSelectedApplicationId = async ({ ...data }) => {
         const id = data.id;
         try {
-           const result = await api.get("/api/v1/collections/getfaculties/" + id)
+            const result = await api.get("/api/v1/collections/getfaculties/" + id)
             return result;
         } catch (error) {
             console.log(error);
@@ -18,7 +18,7 @@ class Services extends Component{
     FetechProgramsBaseOnSelectedApplicationId = async ({ ...data }) => {
         const id = data.id;
         try {
-           const response = await api.get("/api/v1/collections/getprograms/" + id)
+            const response = await api.get("/api/v1/collections/getprograms/" + id)
             return response;
         } catch (error) {
             console.log(error);
@@ -28,7 +28,7 @@ class Services extends Component{
     FetechEntryLevelBaseOnSelectedApplicationId = async ({ ...data }) => {
         const id = data.id;
         try {
-           const response = await api.get("/api/v1/collections/getentrylevels/" + id)
+            const response = await api.get("/api/v1/collections/getentrylevels/" + id)
             return response;
         } catch (error) {
             console.log(error);
@@ -38,7 +38,7 @@ class Services extends Component{
     FetechDepartmentBaseOnSelectedApplicationId = async ({ ...data }) => {
         const id = data.id;
         try {
-           const response = await api.get("/api/v1/collections/getdepartments/" + id)
+            const response = await api.get("/api/v1/collections/getdepartments/" + id)
             return response;
         } catch (error) {
             console.log(error);
@@ -49,9 +49,9 @@ class Services extends Component{
         const token = this.getUserDetails();
         try {
             const response = await api.get("/private/student/" + id, {
-               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
-           })
+            })
             return response;
         } catch (error) {
             console.log(error);
@@ -60,9 +60,9 @@ class Services extends Component{
 
     saveRegistration = async ({ ...data }) => {
         try {
-            await api.post("/auth/register",JSON.stringify(data.data),{
+            await api.post("/auth/register", JSON.stringify(data.data), {
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', 
+                credentials: 'include',
             }).then((result) => {
                 if (result.status == 200) {
                     $('#AppRegistration').hide();
@@ -86,21 +86,21 @@ class Services extends Component{
     }
 
     auth = async ({ ...data }) => {
-       try {
-            await api.post("/private/auth/login",JSON.stringify(data),{
+        try {
+            await api.post("/private/auth/login", JSON.stringify(data), {
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', 
+                credentials: 'include',
             }).then((result) => {
                 if (result.status == 200) {
                     $('.error').show()
                     $('.errormsgContainer').hide()
                     // set the user as logged in and store the token in local storage
-                    const token  =  result.data.token;
+                    const token = result.data.token;
                     const name = result.data.name;
                     const uid = result.data.id;
-                // Apply setCookie
-               this.setCookie('jwt', token, 30);
-                this.setAppDataToLocalStorage(token, name, uid)
+                    // Apply setCookie
+                    this.setCookie('jwt', token, 30);
+                    this.setAppDataToLocalStorage(token, name, uid)
                     setTimeout(function () {
                         window.location.replace("/");
                     }, 0);
@@ -110,7 +110,7 @@ class Services extends Component{
                 $('.errormsgContainer').html(error.response.data.error);
             })
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
@@ -123,7 +123,7 @@ class Services extends Component{
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
@@ -136,7 +136,7 @@ class Services extends Component{
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
@@ -149,7 +149,7 @@ class Services extends Component{
             });
             return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
@@ -162,33 +162,33 @@ class Services extends Component{
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     getCategorById = async (id) => {
         try {
             const token = this.getUserDetails();
-            const result = await api.get("/private/category/"+id, {
+            const result = await api.get("/private/category/" + id, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     UpdateStudentProfile = async ({ ...data }) => {
-       try {
+        try {
             const token = this.getUserDetails();
-            const result = await api.put("/private/student/update/"+data.id, data, {
+            const result = await api.put("/private/student/update/" + data.id, data, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
@@ -199,48 +199,48 @@ class Services extends Component{
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
     
     DeleteCategory = async (id) => {
         try {
             const token = this.getUserDetails();
-            const result = await api.delete("/private/category/delete/"+id, {
+            const result = await api.delete("/private/category/delete/" + id, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
             return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     UpdateCategory = async ({ ...data }) => {
         try {
             const token = this.getUserDetails();
-            const result = await api.put("/private/category/update/"+data.id, data, {
+            const result = await api.put("/private/category/update/" + data.id, data, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
-    setCategoryStatusToVisible  = async (id) => {
+    setCategoryStatusToVisible = async (id) => {
         try {
             const token = this.getUserDetails();
             const result = await api.put("/private/category/data?action=change_status&status=true&id=" + id, {}, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
@@ -251,9 +251,9 @@ class Services extends Component{
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
     
@@ -266,7 +266,7 @@ class Services extends Component{
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
@@ -277,48 +277,48 @@ class Services extends Component{
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     getFacultyById = async (id) => {
         try {
             const token = this.getUserDetails();
-            const result = await api.get("/private/faculty/"+id, {
+            const result = await api.get("/private/faculty/" + id, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
     
     UpdateFaculty = async ({ ...data }) => {
-         try {
+        try {
             const token = this.getUserDetails();
-            const result = await api.put("/private/faculty/update/"+data.id, data, {
+            const result = await api.put("/private/faculty/update/" + data.id, data, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     DeleteFaculty = async (id) => {
         try {
             const token = this.getUserDetails();
-            const result = await api.delete("/private/faculty/delete/"+id, {
+            const result = await api.delete("/private/faculty/delete/" + id, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
             return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
     
@@ -331,59 +331,59 @@ class Services extends Component{
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
     
-    CreateNewDepartment = async ({ ...data }) => {  
+    CreateNewDepartment = async ({ ...data }) => {
         try {
             const token = this.getUserDetails();
             const result = await api.post("/private/department/create", data, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     DeleteDepartment = async (id) => {
         try {
             const token = this.getUserDetails();
-            const result = await api.delete("/private/department/delete/"+id, {
+            const result = await api.delete("/private/department/delete/" + id, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
             return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     getDepartmentById = async (id) => {
         try {
             const token = this.getUserDetails();
-            const result = await api.get("/private/department/"+id, {
+            const result = await api.get("/private/department/" + id, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     UpdateDepartment = async ({ ...data }) => {
-         try {
+        try {
             const token = this.getUserDetails();
-            const result = await api.put("/private/department/update/"+data.id, data, {
+            const result = await api.put("/private/department/update/" + data.id, data, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
     
@@ -396,12 +396,21 @@ class Services extends Component{
             });
             return result;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
-    UpdateProfessor = async ({ ...data }) => {
-        
+    updateProfessorDetails = async (data, id) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.put("/private/professor/update/" + id, data, {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result.status;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
     }
 
     DeleteProfessor = async ({ ...data }) => {
@@ -413,57 +422,87 @@ class Services extends Component{
             });
             return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
     getProfessorById = async (id) => {
-        
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/professor/" + id, {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
     }
 
-    appointProfessorToDepartmentManagement = async ({ ...data }) => {
-        
+    appointProfessorToDepartmentManagement = async (id) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/professor/withCategories/" + id, {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
     }
 
     registerNewProfessor = async ({ ...data }) => {
-         try {
+        try {
             const token = this.getUserDetails();
             const result = await api.post("/private/professor/add", JSON.stringify(data.requestdata), {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
             return result;
-         } catch (error) {
+        } catch (error) {
             return error;
         }
     }
 
-    setProfessorFeatureToEnabled = async(id) => {
+    setProfessorFeatureToEnabled = async (id) => {
         try {
             const token = this.getUserDetails();
             const result = await api.put("/private/features/data?action=change_features&features=true&id=" + id, {}, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
-    setProfessorFeatureToNotEnabled = async(id) => {
+    setProfessorFeatureToNotEnabled = async (id) => {
         try {
             const token = this.getUserDetails();
             const result = await api.put("/private/features/data?action=change_features&features=false&id=" + id, {}, {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
                 credentials: 'include',
             });
-           return result.status;
+            return result.status;
         } catch (error) {
-           console.error('Authentication failed', error);
+            console.error('Authentication failed', error);
         }
     }
 
+    storeProfessorApointmentBase =async ({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result =await api.post("/private/professor/appoint", JSON.stringify(data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
     setCookie=(cName, cValue, expDays)=> {
         let date = new Date();
         date.setTime(date.getTime() + (expDays * 24 * 60 * 60 * 1000));

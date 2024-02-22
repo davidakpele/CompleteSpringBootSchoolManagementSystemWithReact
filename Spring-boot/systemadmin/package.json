@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@coreui/coreui": "^4.3.2",
+    "@coreui/react": "^4.11.1",
     "@mui/material": "^5.15.10",
     "@syncfusion/ej2-react-splitbuttons": "^24.2.3",
     "axios": "^1.6.5",
@@ -20,8 +22,9 @@
     "react-dom": "^18.2.0",
     "react-international-phone": "^4.2.5",
     "react-modal": "^3.16.1",
+    "react-select2": "^4.0.3",
     "react-sweetalert2": "^0.6.0",
-    "react-telephone-input": "^5.0.0"
+    "select2": "^4.0"
   },
   "devDependencies": {
     "@fortawesome/fontawesome": "^1.1.8",

@@ -1,24 +1,11 @@
 /* eslint-disable no-unused-vars */
-
 /* eslint-disable react/prop-types */
-
 import Nav from "./components/Header/Nav/Nav"
-import '../../assets/css/admin/assets/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css'
-import '../../assets/css/admin/assets/bower_components/select2/css/select2.min.css'
-import '../../assets/css/admin/assets/dist/css/skins/skin-blue.min.css'
-import '../../assets/css/admin/assets/dist/css/skins/skin-yellow.min.css'
-import '../../assets/css/admin/assets/bower_components/bootstrap-datetimepicker/bootstrap-datetimepicker.min.css'
-import '../../assets/css/admin/assets/bower_components/pace/pace-theme-flash.css'
-import '../../assets/css/admin/assets/bower_components/datatables.net-bs/plugins/Buttons-1.5.6/css/buttons.bootstrap.min.css'
 import '../../assets/css/admin/assets/dist/css/mystyle.css'
-import '../../assets/css/admin/assets/bower_components/codemirror/lib/codemirror.min.css'
-import '../../assets/css/admin/assets/bower_components/froala_editor/css/froala_editor.pkgd.min.css'
-import '../../assets/css/admin/assets/bower_components/froala_editor/css/froala_style.min.css'
-import '../../assets/css/admin/assets/bower_components/froala_editor/css/themes/royal.min.css'
-import DataTable from 'datatables.net-dt';
+import 'select2/dist/css/select2.min.css'
 import 'datatables.net-dt/css/jquery.dataTables.css'
 import './ProfessorList.css'
-import $ from 'jquery';
+import $, { event } from 'jquery';
 import {useMemo, useEffect, useRef, useState } from 'react';
 import ApiServices from "../../services/ApiServices";
 import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
@@ -27,6 +14,7 @@ import Swal from 'sweetalert2';
 import { ToastContainer, toast } from 'react-toastify';
 import userP from '../../assets/images/admin.png'
 import 'react-toastify/dist/ReactToastify.css';
+import 'select2'
 
 const ProfessorsList = () => {
   const tableRef = useRef(null);
@@ -35,7 +23,38 @@ const ProfessorsList = () => {
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showAdditionalFields, setShowAdditionalFields] = useState(true);
-
+  const [isSelectDepartment, setIsSelectDepartment]= useState(true);
+  const [formErrors, setFormErrors] = useState({});
+  const [scheduleformErrors, setScheduleFormErrors] = useState({});
+  const [departments, setDepartments] = useState([]);
+  const [validationError, setValidationError] = useState('');
+  const [formData, setFormData] = useState({
+    id:'',
+    Email: '',
+    Firstname: '',
+    Surname: '',
+    Telephone_No: '',
+    Date_of_Birth: '',
+    Gender: '',
+    Relationship_sts: '',
+    Citizenship: '',
+    nationalIdentificationNumber: '',
+    Blood_Type: '',
+    Religion: '',
+    Qualification: '',
+    Profile__Picture: '',
+    Address: ''
+  });
+  
+  const [appointForm, setAppointForm] = useState({});
+  const [appointmentFormData, setAppointmentFormData] = useState({
+    professorId:'',
+    categoryId: '',
+    facultyId: '',
+    departmentId: [],
+    designation:'',
+  })
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -59,17 +78,29 @@ const ProfessorsList = () => {
   
   useEffect(() => {
     const handleResize = () => {
-    setShowAdditionalFields(window.innerWidth < 1165);
-    };
-    // Initial check on mount
-    handleResize();
-    // Attach the event listener
-    window.addEventListener('resize', handleResize);
-    // Clean up the event listener on unmount
-    return () => {
-    window.removeEventListener('resize', handleResize);
-    };
-    }, []);
+      setShowAdditionalFields(window.innerWidth < 1165);
+      };
+      // Initial check on mount
+      handleResize();
+      // Attach the event listener
+      window.addEventListener('resize', handleResize);
+      // Clean up the event listener on unmount
+      return () => {
+      window.removeEventListener('resize', handleResize);
+      };
+  }, []);
+
+  const handleDepartmentCheckboxChange = (departmentId) => {
+    setAppointmentFormData((prevFormData) => ({
+      ...prevFormData,
+      departmentId: prevFormData.departmentId.includes(departmentId)
+        ? prevFormData.departmentId.filter((id) => id !== departmentId)
+        : [...prevFormData.departmentId, departmentId],
+    }));
+    setValidationError('');
+    setIsSelectDepartment(false)
+  };
+
   const handleCheckboxChange = (event) => {
     $('#iz').hide();
     const { id } = event.target;
@@ -123,6 +154,24 @@ const ProfessorsList = () => {
         });
       })
   }
+  };
+
+  const handleInputChangeOnDesignationField = (event) => {
+    const { name, value } = event.target;
+
+    setAppointmentFormData({
+      ...appointmentFormData,
+      [name]: value,
+    });
+  }
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
   const handleCheckBoxChangleSingle = () =>{
@@ -212,8 +261,39 @@ const ProfessorsList = () => {
     }
   }
 
-  const HandleEditProfessor = (id) => {
-    setShowEditForm(true);
+  const HandleEditProfessor = async (id) => {
+    try {
+      await ApiServices.getProfessorById(id)
+        .then(response => { 
+          if (response.status == 200) {
+            setShowAppointmentForm(false)
+            setShowEditForm(true)
+            setFormData({
+              id: response.data.id,
+              nationalIdentificationNumber: response.data.records[0].nationalIdentificationNumber,
+              Surname: response.data.records[0].surname,
+              Firstname: response.data.records[0].firstname,
+              Email: response.data.email,
+              Telephone_No: response.data.records[0].mobile,
+              Date_of_Birth: response.data.records[0].dateOfBirth,
+              Address: response.data.records[0].address,
+              Qualification: response.data.records[0].qualification,
+              Blood_Type: response.data.records[0].bloodType,
+              Religion: response.data.records[0].religion,
+              Gender: response.data.records[0].gender,
+              Relationship_sts: response.data.records[0].relationshipStatus
+            });
+          } else {
+            setShowEditForm(false)
+          }
+        }).fail(xhr => {
+           setShowEditForm(false)
+          console.log(xhr);
+        })
+    } catch (error) {
+      setShowEditForm(false)
+    }
+   
   };
 
   const HandleDeleteProfessor = (id) => {
@@ -245,8 +325,43 @@ const ProfessorsList = () => {
     }); 
   };
 
-  const HandleProfessorAppointment = (id) => {
-    setShowAppointmentForm(true)
+  const HandleProfessorAppointment = async(id) => {
+    try {
+      setDepartments([]);
+      await ApiServices.appointProfessorToDepartmentManagement(id)
+        .then(response => { 
+          if (response.status == 200) {
+            if (response.data.appointed ==true) {
+              //set appointed modal display visible
+              setShowEditForm(false)
+            } else {
+              //set new setShowAppointmentForm visible
+              setShowEditForm(false)
+              setShowAppointmentForm(true)
+              setAppointForm({
+                  id: response.data.id,
+                  surname: response.data.surname,
+                  firstname: response.data.firstname,
+                  selectedCategoryId: '',
+                  categories: response.data.categories,
+              });
+              const newValue = response.data.id;
+              setAppointmentFormData((prevFormData) => ({
+                ...prevFormData,
+                professorId: newValue,
+              }));
+            }
+           
+          } else {
+            setShowAppointmentForm(false)
+          }
+        }).fail(xhr => {
+           setShowAppointmentForm(false)
+          console.log(xhr);
+        })
+    } catch (error) {
+      setShowAppointmentForm(false)
+    }
   };
 
   const handleCancelAppointmentModal = async (event) => {
@@ -259,30 +374,241 @@ const ProfessorsList = () => {
     setShowEditForm(false);
   }
 
-    var ColClass = "";
-    var ColClass2 = "";
-    if (showAppointmentForm && showAdditionalFields || showEditForm && showAdditionalFields) {
-        ColClass = 'col-md-12';
-        ColClass2 = 'col-md-12 mt-4';
-    } else if (!showAppointmentForm && showAdditionalFields  || !showEditForm && showAdditionalFields) {
-        ColClass = 'col-md-12'
-        ColClass2 = 'col-md-12 mt-4';
-    } else if (showAppointmentForm && !showAdditionalFields  || showEditForm && !showAdditionalFields)  {
-        ColClass = 'col-md-8 ww-1'
-        ColClass2 = 'col-md-4';
-    } else {
-      ColClass = 'col-md-12'
-      ColClass2 = 'col-md-12';
+  const HandleEditSubmit = (e) => {
+    e.preventDefault();
+    // Perform your form validation here
+    const errors = validateEditFormData(formData);
+    setFormErrors(errors);
+  }
+
+  const validateEditFormData = (data) => {
+    let errors = {};
+    var id = data.id;
+    if (!data.Firstname) {
+        errors.Firstname = 'Firstname is required';
     }
+
+    if (!data.Surname) {
+        errors.Surname = 'Surname is required';
+    }
+
+    if (!data.Email) {
+        errors.Email = 'Email is required';
+    }
+
+    if (!data.Telephone_No) {
+        errors.Telephone_No = 'Mobile Number is required';
+    }
+
+    if (!data.Date_of_Birth) {
+        errors.Date_of_Birth = 'Date of birth is required';
+    }
+
+    if (!data.Gender) {
+        errors.Gender = 'Gender is required';
+    }
+
+    if (!data.Relationship_sts) {
+        errors.Relationship_sts = 'Relationship Status is required';
+    }
+
+    if (!data.nationalIdentificationNumber) {
+        errors.nationalIdentificationNumber = 'National Identification Number is required';
+    }
+
+    if (!data.Blood_Type) {
+        errors.Blood_Type = 'Blood Type is required';
+    }
+
+    if (!data.Religion) {
+        errors.Religion = 'Religion is required';
+    }
+
+    if (!data.Qualification) {
+        errors.Qualification = 'Qualification is required';
+    }
+
+    if (!data.Address) {
+        errors.Address = 'Address is required';
+    }
+    if (Object.keys(errors).length === 0) {
+        const requestdata = {
+            "ProfessorAuthenticationInfo": {
+                "AccessCode":"",
+                "email": data.Email,
+                "password": "",
+            },
+            "ProfessorRecordInfo": {
+                "firstname": data.Firstname,
+                "surname": data.Surname,
+                "dateOfBirth": data.Date_of_Birth,
+                "gender": data.Gender,
+                "email": data.Email,
+                "relationshipStatus": data.Relationship_sts,
+                "mobile": data.Telephone_No,
+                "nationalIdentificationNumber": data.nationalIdentificationNumber,
+                "religion": data.Religion,
+                "bloodType": data.Blood_Type,
+                "address": data.Address,
+                "qualification":data.Qualification
+            },
+        }
+        fireEditPost(requestdata, id)
+    }
+    return errors;
+  }
+
+  const fireEditPost = async (requestdata, id) => {
+    const response = await ApiServices.updateProfessorDetails(requestdata, id);
+    if (response == 200) {
+      toast.success("Successfully Updated.");
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 1000);
+    } else {
+      toast.error("Something went wrong.");
+    }
+  }
+
+  const handleCategoryChange = async (event) => {
+    const { name, value } = event.target;
+     setAppointmentFormData({
+      ...appointmentFormData,
+      [name]: value,
+    });
+    try {
+      var id = value;
+      if (id == null || id == "") { 
+        $('#facultyId').empty();
+        $('#facultyId').append('<option value="">--Empty--</option>')
+        $('#departmentName').empty();
+        $('#departmentName').append('<option value="">--Empty--</option>')
+        setDepartments([]);
+        return false;
+      } else {
+        const getfacultyapi = await ApiServices.FetechFacultiesBaseOnSelectedApplicationId({ id });
+        if (getfacultyapi.status == 200) {
+          $('#facultyId').empty();
+          $('#facultyId').append('<option value="">--Select--</option>')
+           setDepartments([]);
+          getfacultyapi.data.data.forEach(function (element) {
+            $('#facultyId').append('<option value="' + element.id + '">' + element.facultyName + '</option>');
+          });
+        }
+      }
+    } catch (error) {
+      //
+    }           
+    
+  };
+
+  const handleInputChangeOnFacultyField = async (event) => {  
+    const { name, value } = event.target;
+     setAppointmentFormData({
+      ...appointmentFormData,
+      [name]: value,
+    });
+    try {
+      var id = value;
+      if (id== null || id == "") {
+        $('#departmentName').empty();
+         setDepartments([]);
+        $('#departmentName').append('<option value="">--Empty--</option>')
+        return false;
+      } else {
+        const getdepartmentapi = await ApiServices.FetechDepartmentBaseOnSelectedApplicationId({ id })
+        setDepartments(getdepartmentapi.data.data);
+        if (getdepartmentapi.status ==200) {
+          $('#departmentName').empty();
+          $('#departmentName').append('<option value="">--Select--</option>')
+          getdepartmentapi.data.data.forEach(function(element) {
+            $('#departmentName').append('<option value="' + element.id + '">' + element.departmentName + '</option>');
+          });
+        }
+      }
+    } catch (error) {
+        console.warn("Error in fetchinh Department Api's ");
+    }
+  };
+  
+  const HandleAppointmentSubmit =(e) => {
+    e.preventDefault();
+    // Perform your form validation here
+    const errors = validateAppointmentFormData(appointmentFormData);
+    setScheduleFormErrors(errors);
+  }
+
+  const validateAppointmentFormData = (appointmentFormData) => {
+    let errors = {};
+
+    if (!appointmentFormData.categoryId) {
+      errors.categoryId = 'Please select category.';
+    }
+    if (!appointmentFormData.professorId) {
+      errors.professorId = 'Please provide professor details.';
+    }
+    if (!appointmentFormData.facultyId) {
+      errors.facultyId = 'Please select faculty.';
+    }
+    if (departments.length > 0 && appointmentFormData.departmentId.length === 0) {
+      setIsSelectDepartment(true)
+      setValidationError('Please select at least one department.');
+    } else {
+      setIsSelectDepartment(false)
+      setValidationError('');
+    }
+
+    if (!appointmentFormData.designation) {
+      errors.designation = 'Please select designation';
+    }
+    if (appointmentFormData.categoryId && appointmentFormData.facultyId && appointmentFormData.departmentId.length >=1 && appointmentFormData.designation) {
+      // api
+      saveAppointment({"professorId":appointmentFormData.professorId, "categoryId":appointmentFormData.categoryId, "facultyId":appointmentFormData.facultyId, "departmentId":appointmentFormData.departmentId.join(','), "designation":appointmentFormData.designation})
+    }
+    return errors;
+  }
+
+  const saveAppointment = async (data) => {
+    const respones=  await ApiServices.storeProfessorApointmentBase(data)
+    if (respones.status == 200) {
+      toast.success("Successfully Updated.");
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 1000);
+    } else {
+      if (respones.response.status ==409) {
+         toast.warning("This professor has already been appointed.");
+      } else {
+        toast.error("Something went wrong.");
+      }
+      
+    }
+  }
+
+  var ColClass = "";
+  var ColClass2 = "";
+  if (showAppointmentForm && showAdditionalFields || showEditForm && showAdditionalFields) {
+      ColClass = 'col-md-12';
+      ColClass2 = 'col-md-12 mt-4';
+  } else if (!showAppointmentForm && showAdditionalFields  || !showEditForm && showAdditionalFields) {
+      ColClass = 'col-md-12'
+      ColClass2 = 'col-md-12 mt-4';
+  } else if (showAppointmentForm && !showAdditionalFields  || showEditForm && !showAdditionalFields)  {
+      ColClass = 'col-md-8 ww-1'
+      ColClass2 = 'col-md-4';
+  } else {
+    ColClass = 'col-md-12'
+    ColClass2 = 'col-md-12';
+  }
   const columns = useMemo(
     () => [
-        {
+      {
         id: "rowNumber",
         header: "S/N",
         // eslint-disable-next-line react/prop-types
         Cell: ({ row }) => <div>{row.index + 1}</div>
       },
-       {
+      {
         accessorKey: "deleteAll",
         header:<label className="mcui-checkbox"><input type="checkbox"  id="chk_all" onChange={handleCheckboxChange} /> <div><svg className="mcui-check" viewBox="-2 -2 35 35" aria-hidden="true"><title>checkmark-circle</title><polyline points="7.57 15.87 12.62 21.07 23.43 9.93" /></svg></div></label>,
         Cell: ({ row }) => (
@@ -292,7 +618,7 @@ const ProfessorsList = () => {
       {
         accessorKey: "permission",
         header:"User Permit",
-       Cell: ({ value, row }) => (
+        Cell: ({ value, row }) => (
           <div>
             {!row.original.features ? (
               <button onClick={() => setFeaturesToVisible(row.original.id)}  className="btn btn-danger btn-xs" style={{height:'10%'}}><i className="fa fa-plus"></i>Activate visibility</button>
@@ -322,7 +648,7 @@ const ProfessorsList = () => {
       {
         accessorKey: "image",
         header: "Image",
-          Cell: ({ row }) => (
+        Cell: ({ row }) => (
           <>
             {row.original.records.map((record, index) => (
               <div key={index}>
@@ -405,37 +731,61 @@ const ProfessorsList = () => {
                            <h6 style={{fontFamily:'sans-serif', textAlign:'center', fontStyle:'normal', fontWeight:'bolder'}}>Appointmenting Professor</h6> 
                           </div>
                           <div className="card-body">
-                            <form method="post" autoComplete='off'>
+                            <form method="post" autoComplete='off' onSubmit={HandleAppointmentSubmit}>
+                              <input type="text" name="professorId" id="professorId" value={appointForm.id} className="hidden" style={{ display:'none'}} />
                               <div className="form-group">
                                 <label name="name" id="name">Full Name:*</label>
-                                <input type="text" name="name" id="name" className='form-control'/>
+                                <input type="text" name="name" id="name" className='form-control' value={appointForm.firstname+' '+appointForm.surname} readOnly disabled/>
                               </div>
                               <div className="form-group c-invalid">
-                                  <label name="category" id="category">Application:*</label>
-                                      <select name="category" id="category" className="form-control">
+                                  <label name="categoryId">Application:*</label>
+                                    <select name="categoryId" id="categoryId" className={`form-control ${scheduleformErrors.categoryId? 'is-invalid' : ''}`}  onChange={handleCategoryChange}>
                                       <option value="">--Empty--</option>
-                                      <option value="1"> Distance Learning Institute </option>
-                                      <option value="2" > Postgraduate </option>
-                                      <option value="3" > Undergraduate </option>
+                                      {appointForm.categories.map((category) => (
+                                        <option key={category.id} value={category.id}>
+                                          {category.categoryName}
+                                        </option>
+                                      ))}
                                   </select>
+                                  {scheduleformErrors.categoryId && <div className="invalid-feedback">{scheduleformErrors.categoryId}</div>}
                               </div>
-                              <div className="form-group c-invalid">
-                                <label name="Faculty" id="Faculty">Faculty:*</label>
-                                <select name="Faculty" id="Faculty" className="form-control">
+                              <div className="form-group">
+                                <label name="facultyId">Faculty:*</label>
+                                <select name="facultyId" id="facultyId" className={`form-control ${scheduleformErrors.facultyId ? 'is-invalid' : ''}`}  onChange={handleInputChangeOnFacultyField}>
                                   <option value="">--Empty--</option>
                                 </select>
+                                {scheduleformErrors.facultyId && <div className="invalid-feedback">{scheduleformErrors.facultyId}</div>}
                               </div>
+                                <div className="form-group">
+                                  <label name="departmentName">Department:*</label>
+                                    <div className="departmentBlog">
+                                        {departments.map((element) => (
+                                        <div key={element.id}>
+                                          <label className="checkbox-container">
+                                            <input type="checkbox" 
+                                            id={`departmentCheckbox_${element.id}`}
+                                              value={element.id}
+                                              onChange={() => handleDepartmentCheckboxChange(element.id)}/>
+                                            <span className="checkmark"></span>
+                                          </label>
+                                          <label htmlFor={`departmentCheckbox_${element.id}`} className="ml-3">
+                                            <span>&nbsp;&nbsp;{element.departmentName}</span>
+                                          </label>
+                                        </div>
+                                      ))}
+                                    </div>
+                                     {isSelectDepartment && validationError && ( <div className="error-message" style={{marginTop: '0.25rem',fontSize: '80%',color:' #dc3545'}}>{validationError}</div> )}
+                                </div>
                               <div className="form-group c-invalid">
-                                <label name="Department" id="Department">Department:*</label>
-                                <select name="Department" id="Department" className="form-control">
+                                <label name="Designation">Designation:*</label>
+                                <select name="designation" id="designation" className={`form-control ${scheduleformErrors.designation ? 'is-invalid' : ''}`}  onChange={handleInputChangeOnDesignationField}>
                                   <option value="">--Empty--</option>
+                                  <option value="Full Time" >Full Time</option>
+                                  <option value="Part Time">Part Time</option>
+                                  <option value="Contract">Contract</option>
+                                  <option value="Remotely">Remotely</option>
                                 </select>
-                              </div>
-                              <div className="form-group c-invalid">
-                                <label name="Designation" id="Designation">Designation:*</label>
-                                <select name="Designation" id="Designation" className="form-control">
-                                  <option value="">--Empty--</option>
-                                </select>
+                                {scheduleformErrors.designation && <div className="invalid-feedback">{scheduleformErrors.designation}</div>}
                               </div>
                               <button type="submit" className='btn btn-success pull-right'>Save Update</button>
                               <button type="button"  onClick={handleCancelAppointmentModal}  className='btn btn-default'>Cancel Update</button>
@@ -446,7 +796,6 @@ const ProfessorsList = () => {
                         </>
                       )
                       }
-
                       {showEditForm && (
                         <>
                         <div className={ColClass2}>
@@ -455,14 +804,119 @@ const ProfessorsList = () => {
                               <h6 style={{fontFamily:'sans-serif', textAlign:'center', fontStyle:'normal', fontWeight:'bolder'}}>Edit Professor</h6> 
                             </div>
                             <div className="card-body">
-                              <h3>Edit Body</h3>
-                              <button type="button"  onClick={handleCancelEditProfessorModalForm}  className='btn btn-default'>Cancel Update</button>
-                            </div>
+                              <form method="post" onSubmit={HandleEditSubmit}>
+                                <div className="row">
+                                  <input type="text" id="_2id" name="_2id" value={formData.id} className="hidden" hidden style={{display:"none"}}/>
+                                  <div className="col-md-12 col-sm-12 col-xs-12" >
+                                    <label htmlFor="Firstname">Firstname:<span className="text-danger">*</span></label>
+                                    <input type="text" name="Firstname" id="Firstname"  placeholder="Firstname" value={formData.Firstname} onChange={handleInputChange} className={`form-control ${formErrors.Firstname ? 'is-invalid' : ''}`}/>
+                                    {formErrors.Firstname && <div className="invalid-feedback">{formErrors.Firstname}</div>}
+                                    </div>
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                        <label htmlFor="Surname">Surname:<span className="text-danger">*</span></label>
+                                        <input type="text" name="Surname" id="Surname"  placeholder="Last Name:" value={formData.Surname} onChange={handleInputChange} className={`form-control ${formErrors.Surname ? 'is-invalid' : ''}`}/>
+                                        {formErrors.Surname && <div className="invalid-feedback">{formErrors.Surname}</div>}
+                                    </div>
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                        <label htmlFor="Email">Lecturer Email</label>
+                                        <input type="email" name="Email" id="Email" placeholder="Lecturer Email" value={formData.Email} onChange={handleInputChange} className={`form-control ${formErrors.Email ? 'is-invalid' : ''}`}/>
+                                        {formErrors.Email && <div className="invalid-feedback">{formErrors.Email}</div>}
+                                    </div>	
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                        <label htmlFor="Telephone_No">Mobile:</label>
+                                        <input type="tel" name="Telephone_No" id="Telephone_No"  placeholder="+(234) 5435-4542-34" value={formData.Telephone_No} onChange={handleInputChange} className={`form-control ${formErrors.Telephone_No ? 'is-invalid' : ''}`}/>
+                                        {formErrors.Telephone_No && <div className="invalid-feedback">{formErrors.Telephone_No}</div>}
+                                    </div>
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                        <label htmlFor="Date_of_Birth">Date of Birth:</label>
+                                        <input type="date" name="Date_of_Birth" id="Date_of_Birth"  value={formData.Date_of_Birth} onChange={handleInputChange} className={`form-control ${formErrors.Date_of_Birth ? 'is-invalid' : ''}`}/>
+                                        {formErrors.Date_of_Birth && <div className="invalid-feedback">{formErrors.Date_of_Birth}</div>}
+                                    </div>
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                      <label htmlFor="Gender">Gender</label>
+                                      <select name="Gender" id="Gender" value={formData.Gender} onChange={handleInputChange} className={`form-control select2 ${formErrors.Gender ? 'is-invalid' : ''}`} >
+                                          <option value=""  selected>Select Gender</option>
+                                          <option  selected={formData.Gender == "Female" ? "selected" : "Female"} value="Female">Male</option>
+                                          <option selected={formData.Male == "Male" ? "selected" : "Male"} value="Male">Female</option>
+                                      </select>
+                                      {formErrors.Gender && <div className="invalid-feedback">{formErrors.Gender}</div>}
+                                    </div>
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                      <label htmlFor="Relationship_sts">Relationship Status </label>
+                                      <select name="Relationship_sts" id="Relationship_sts" value={formData.Relationship_sts} onChange={handleInputChange} className={`form-control select2 ${formErrors.Relationship_sts ? 'is-invalid' : ''}`}>
+                                      <option value=""  selected>Select Relationship</option>
+                                          <option value="Single">Single</option>
+                                          <option value="Divored">Divored</option>
+                                          <option value="Married">Married</option>
+                                          <option value="Complicated">Complicated</option>
+                                          <option value="Window">Window</option>
+                                          <option value="In -Contract Marrige">In -Contract Marrige</option>
+                                      </select>
+                                      {formErrors.Relationship_sts && <div className="invalid-feedback">{formErrors.Relationship_sts}</div>}
+                                    </div>
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                      <label htmlFor="nationalIdentificationNumber">NIN:</label>
+                                      <input  id="nationalIdentificationNumber" name="nationalIdentificationNumber" type="number"  placeholder="NIN:" maxLength="11" min="0"
+                                      max="1000000000009999" step="1" value={formData.nationalIdentificationNumber} onChange={handleInputChange} 
+                                      className={`form-control ${formErrors.nationalIdentificationNumber ? 'is-invalid' : ''}`}/>
+                                      {formErrors.nationalIdentificationNumber && <div className="invalid-feedback">{formErrors.nationalIdentificationNumber}</div>}
+                                    </div>
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                      <label htmlFor="Blood_Type">Blood Type: </label>
+                                      <select name="Blood_Type" id="Blood_Type" value={formData.Blood_Type} onChange={handleInputChange} className={`form-control ${formErrors.Blood_Type ? 'is-invalid' : ''}`}>
+                                      <option value=""  selected>Select Blood Type</option>
+                                          <option value="Group: A">Group: A</option>
+                                          <option value="Group: B">Group: B</option>
+                                          <option value="Group: AB">Group: AB</option>
+                                          <option value="Group:-: O">Group:-: 0</option>
+                                      </select>
+                                      {formErrors.Blood_Type && <div className="invalid-feedback">{formErrors.Blood_Type}</div>}
+                                    </div>
+                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                      <label htmlFor="Religion">Religion: </label>
+                                      <select name="Religion" id="Religion" value={formData.Religion} onChange={handleInputChange} className={`form-control ${formErrors.Religion ? 'is-invalid' : ''}`}>
+                                        <option value=""  selected>Select Professor Religion</option>
+                                        <option value="Christianity">Christianity</option>
+                                        <option value="Islam">Islam</option>
+                                        <option value="Hinduism">Hinduism</option>
+                                        <option value="Buddhism">Buddhism</option>
+                                        <option value="Unaffiliated">Unaffiliated</option>
+                                        <option value="Folk religions">Folk religions</option>
+                                        <option value="None">None</option>
+                                      </select>
+                                      {formErrors.Religion && <div className="invalid-feedback">{formErrors.Religion}</div>}
+                                    </div>
+                                  <div className="col-md-12 col-sm-12 col-xs-12">
+                                      <label htmlFor="Qualification">Qualification: </label>
+                                      <select name="Qualification" id="Qualification" value={formData.Qualification} onChange={handleInputChange} className={`form-control ${formErrors.Qualification ? 'is-invalid' : ''}`} >
+                                        <option value=""  selected>Select Professor Qualification</option>
+                                        <option value="BSc">BSc</option>
+                                        <option value="PhD">PhD</option>
+                                        <option value="HnD">HnD</option>
+                                        <option value="College Degree">College Degree</option>
+                                        <option value="OND">OND</option>
+                                      </select>
+                                      {formErrors.Qualification && <div className="invalid-feedback">{formErrors.Qualification}</div>}
+                                  </div>	
+                                  <div className="col-md-12 col-sm-12 col-xs-12">
+                                      <label htmlFor="Address">Address:</label>
+                                      <textarea  name="Address" id="Address" cols="0" rows="4" placeholder="Address: Plot 28 Kingstone Bridge K29Q HighWay" value={formData.Address} onChange={handleInputChange} className={`form-control ${formErrors.NIN ? 'is-invalid' : ''}`}></textarea>
+                                      {formErrors.Address && <div className="invalid-feedback">{formErrors.Address}</div>}
+                                  </div>
+                                  </div>
+                                <div className="col-md-12 col-sm-12 col-xs-12 mt-3">
+                                  <button type="button"  onClick={handleCancelEditProfessorModalForm}  className='btn btn-default'>Cancel Update</button>
+                                  <button type="submit" id="isAddProfessor" className="ml-4 btn btn-flat bg-purple" style={{ width: "200px" }}><i className="fa fa-save"></i> Save Edit</button>
+                                </div>
+                              </form>
+                            
+
                           </div>
                         </div>
-                        </>
+                        </div>
+                    </>
                       )}
-                  </div>
+                    </div>
               </div>
           </div>  
         </div>

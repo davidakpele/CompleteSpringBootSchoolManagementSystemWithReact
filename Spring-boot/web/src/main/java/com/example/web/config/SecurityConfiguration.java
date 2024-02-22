@@ -37,6 +37,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/private/auth/**").permitAll()
                         .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/private/upload").permitAll()
                         .requestMatchers("/private/cpanel/file").permitAll()
                         .anyRequest().authenticated()
                 )

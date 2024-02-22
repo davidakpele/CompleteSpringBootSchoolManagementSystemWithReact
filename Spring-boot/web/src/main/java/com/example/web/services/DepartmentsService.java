@@ -66,5 +66,9 @@ public class DepartmentsService {
             return departmentsRepository.save(existingDepartment);
         });
     }
+
+    public List<Departments> findDepartmentsByIdIn(List<Long> departmentIdList) {
+        return departmentsRepository.findByIdIn(departmentIdList);
+    }
 }
 

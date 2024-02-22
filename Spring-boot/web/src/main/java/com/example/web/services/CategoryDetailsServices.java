@@ -60,4 +60,8 @@ public class CategoryDetailsServices {
                     return categoriesRepository.save(category);
                 });
     }
+
+    public List<Categories> findAllCategoriesWithFeatures() {
+        return categoriesRepository.findAllCategoriesWithFeatures();
+    }
 }
