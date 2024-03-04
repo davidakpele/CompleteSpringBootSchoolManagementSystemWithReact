@@ -68,4 +68,8 @@ public class FacultiesService {
 
         return false;
     }
+
+    public List<Faculties> getFacultyByIdOnList(Long facultyId) {
+        return facultiesRepository.findFacultiesById(facultyId);
+    }
 }

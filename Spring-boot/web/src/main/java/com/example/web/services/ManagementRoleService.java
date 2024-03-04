@@ -40,7 +40,6 @@ public class ManagementRoleService {
         Optional<Role> role = roleService.findRoleByClearance("PROFESSOR");
         Role pRole = role.orElseThrow(() -> new NoSuchElementException("Role not found for clearance: Professor"));
         // Update all fields with the new data
-        existingRole.setCategoryId(updatedData.getCategoryId());
         existingRole.setFacultyId(updatedData.getFacultyId());
         existingRole.setDepartmentId(updatedData.getDepartmentId());
         existingRole.setDesignation(updatedData.getDesignation());
@@ -68,6 +67,10 @@ public class ManagementRoleService {
     public ManagementRole getManagementRoleByProfessorId(Long professorId) {
         return (ManagementRole) managementRoleRepository.findByProfessorId(professorId)
                 .orElseThrow(() -> new NoSuchElementException("ManagementRole not found for professorId: " + professorId));
+    }
+   
+    public void deleteProfessorFromManagementRole(Long professorId) {
+        managementRoleRepository.deleteByProfessorId(professorId);
     }
 
 }

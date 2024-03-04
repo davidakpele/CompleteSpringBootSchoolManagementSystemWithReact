@@ -66,7 +66,7 @@ public class ProfessorDetailsService implements UserDetailsService {
             professorRepository.save(professor);
             return true; // Updated successfully
         } else {
-            return false; // Professor not found
+            return false;
         }
     }
 
