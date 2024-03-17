@@ -12,6 +12,8 @@ import com.example.web.model.Subjects;
 import com.example.web.repository.ClassesRepository;
 import com.example.web.repository.CoursesRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class CourseServices {
     
@@ -45,7 +47,7 @@ public class CourseServices {
 
 
     public Optional<Courses> updateCourseById(Long courseId, CourseRequestBody courseRequestBody) {
-         return coursesRepository.findById(courseId)
+        return coursesRepository.findById(courseId)
                 .map(course -> {
                     course.setDepartmentId(courseRequestBody.getDepartmentId());
                     course.setClassId(courseRequestBody.getClassId());
@@ -53,8 +55,17 @@ public class CourseServices {
                     course.setCourseCode(courseRequestBody.getCourseCode());
                     course.setCourseTitle(courseRequestBody.getCourseTitle());
                     course.setCourseUnit(courseRequestBody.getCourseUnit());
-                    course.setCourseStatus(courseRequestBody.getCourseUnit());
+                    course.setCourseStatus(courseRequestBody.getCourseStatus());
                     return coursesRepository.save(course);
-                 });
+                });
+    }
+
+    @Transactional
+    public void deleteCourseByIds(List<Long> id) {
+        coursesRepository.deleteByIdIn(id);
+    }
+
+    public Optional<Courses> getCourseById(Long courseId) {
+        return coursesRepository.findById(courseId);
     }
 }

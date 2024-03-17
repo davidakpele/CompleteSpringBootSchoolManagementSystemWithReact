@@ -14,5 +14,6 @@ public class LoginResponses {
     private String name;
     private String status;
     protected String id;
+    protected String role;
     protected String message;
 }

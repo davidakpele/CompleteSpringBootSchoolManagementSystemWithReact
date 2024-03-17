@@ -29,6 +29,7 @@ public class StudentsDTOs {
 
     @JsonManagedReference
     private List<StudentRecordsDTOs> records;
+    
     public static StudentsDTOs fromEntity(Students students) {
         StudentsDTOs userDto = new StudentsDTOs();
         userDto.setId(students.getId());

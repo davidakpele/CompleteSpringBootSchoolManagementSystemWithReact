@@ -1,8 +1,6 @@
 /* eslint-disable no-unused-vars */
 
 /* eslint-disable react/prop-types */
-
-import Nav from './components/Header/Nav/NavScroll';
 import 'datatables.net-dt/css/jquery.dataTables.css'
 import {  useEffect, useRef, useState } from 'react';
 import ApiServices from "../../../services/ApiServices";
@@ -13,6 +11,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
+import HeaderNav from './components/Header/Nav/HeaderNav';
+import Aside from './components/Header/Menu/Aside';
 
 const DepartmentList = () => {
   const [show, setShow] = useState(false);
@@ -207,12 +207,12 @@ const DepartmentList = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-            const response = await ApiServices.getAllDepartment();
-            setData(response.data);
-                setLoading(false);
+              const response = await ApiServices.getAllDepartment();
+              setData(response.data);
+              setLoading(false);
             } catch (error) {
-            console.error('Error fetching data:', error);
-            setLoading(false);
+              console.error('Error fetching data:', error);
+              setLoading(false);
             }
         };
         fetchData();
@@ -266,7 +266,8 @@ const DepartmentList = () => {
   return (
     <>
       <ToastContainer />
-      <Nav />
+      <HeaderNav />
+      <Aside />
       {loading ? (
         <>
           <div className="spin" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
@@ -276,113 +277,117 @@ const DepartmentList = () => {
               
       ) : (
           <>
-        <section className="content-header">
-          <h1>Administrative <small>Department Data</small></h1>
-          <ol className="breadcrumb">
-            <li><a href="#"><i className="fa fa-dashboard"></i> Dashboard</a></li>
-            <li className="active">Administrative</li>
-            <li className="active">Department</li>
-          </ol>
-        </section>
-        <section className="content container-fluid">
-            <div className="box" >
-                <div className="box-header with-border">
-                <h3 className="box-title">Master Administration Data</h3>
-                <div className="box-tools pull-right">
-                    <button type="button" className="btn btn-box-tool" data-widget="collapse"><i className="fa fa-minus"></i></button>
-                </div>
-                </div>
-                <div className="box-body">
-                    <div className="mt-2 mb-4">
-                        <button type="button" onClick={FetchFacultyList} className="btn btn-sm bg-blue btn-flat" data-toggle="modal" href="#matkulId">
-                            <i className="fa fa-plus"></i> Add New Department 
-                        </button>
-                        <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
-                            <button id="delete__Btn" title="Delete This Professor" className="btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
-                            <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: '#000000', borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
+          <div className="content-wrapper" >
+                <section className="content  text-dark">
+                    <div className="container-fluid">
+                      <hr className="border-dark"/>
+                        <div className="row">
+                            <div className="col-12 col-sm-12 col-md-12">
+                                <section className="content container-fluid">
+                                    <div className="box" >
+                                        <div className="box-header with-border">
+                                        <h3 className="box-title">Master Administration Data</h3>
+                                        <div className="box-tools pull-right">
+                                            <button type="button" className="btn btn-box-tool" data-widget="collapse"><i className="fa fa-minus"></i></button>
+                                        </div>
+                                        </div>
+                                        <div className="box-body">
+                                            <div className="mt-2 mb-4">
+                                                <button type="button" onClick={FetchFacultyList} className="btn btn-sm bg-blue btn-flat" data-toggle="modal" href="#matkulId">
+                                                    <i className="fa fa-plus"></i> Add New Department 
+                                                </button>
+                                                <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
+                                                    <button id="delete__Btn" title="Delete This Professor" className="btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
+                                                    <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: '#000000', borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
+                                                </div>
+                                            </div>
+                                          {/* table */}
+                                          <div className={showAdditionalFields ? "":"d-flex" }>
+                                            <div className={ColClass}>
+                                              <MaterialReactTable table={table} />
+                                            </div>
+                                            {showEditForm && (
+                                              <>
+                                              <div className={ColClass2}>
+                                                <div className="card">
+                                                  <div className="card-header">
+                                                  <h6>Edit <b>{apiData && <span>{apiData.facultyName} </span>}</b> Faculty</h6> 
+                                                  </div>
+                                                  <div className="card-body">
+                                                    <form method="post" autoComplete='off'>
+                                                        <input type="number" name="TargetDepartmentId" id="TargetDepartmentId" defaultValue={departmentData.id}  className='form-control' hidden/>
+                                                        <div className="form-group f-invalid">
+                                                            <label htmlFor="EditFacultyList">Faculty Reference: </label>
+                                                            <select ref={EditCategoryFocusEffect} name="EditFacultyList" id="EditFacultyList" className="form-control"  value={selectedFacultyId} onChange={HandleSelectDepartmentValues}>
+                                                                <option value="">--Empty--</option>
+                                                                  {facultyData.map((faculty) => (
+                                                                    <option key={faculty.id} value={faculty.id}>
+                                                                      {faculty.facultyName}
+                                                                    </option>
+                                                                  ))}
+                                                            </select>
+                                                            <small className="f-help-block" style={{color: '#dd4b39'}}></small>
+                                                        </div>
+                                                        <div className="form-group d-invalid">
+                                                            <label htmlFor="editDepartmentName">Department Name: </label>
+                                                            <input ref={EdirDepartmentEffect} type="text" name="editDepartmentName" id="editDepartmentName" className="form-control w-100" value={departmentData.deptName}  onChange={handleFacultyNameChange}/>
+                                                            <small className="d-help-block" style={{color: '#dd4b39'}}></small>
+                                                        </div>
+                                                        <div className="mt-4">
+                                                          <button type="submit" onClick={handleSaveEdit} className='btn btn-success pull-right'>Save Update</button>
+                                                          <button type="button" onClick={handleCancelUpdate} className='btn btn-default'>Cancel Update</button>
+                                                        </div>
+                                                    </form>
+                                                  </div>
+                                                </div>  
+                                              </div>
+                                              </>
+                                              )
+                                            }
+                                            
+                                          </div>
+                                        </div>
+                                    </div>
+                                      {/* add modal */}
+                                      <Modal show={show} onHide={handleClose} animation={false}>
+                                        <Modal.Header closeButton>
+                                          <Modal.Title>Add New Data</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body>
+                                          <form method="post" >
+                                                <div className="form-group faculty-invalid">
+                                                    <label htmlFor="facultyName">Faculty Reference: </label>
+                                                    <select ref={AddFacultyFocusEffect} name="facultyName" id="CreatefacultyEntity" className="form-control facultyName" >
+                                                        <option value="">--Select--</option>
+                                                        {listFacultiesOnModal.map((item) => (
+                                                        <option key={item.id} value={item.id}>
+                                                            {item.facultyName} 
+                                                        </option>
+                                                        ))}
+                                                    </select>
+                                                    <small className="faculty-help-block" style={{color: '#dd4b39'}}></small>
+                                                </div>
+                                                <div className="form-group department-invalid">
+                                                    <label htmlFor="deparmentEntityData">Department Name: </label>
+                                                    <input  ref={AddDepartmentFocusEffect} type="text" name="deparmentName"  id="deparmentEntityData" className="form-control" />
+                                                    <small className="deparment-help-block" style={{color: '#dd4b39'}}></small>
+                                                </div>
+                                              </form>
+                                        </Modal.Body>
+                                        <Modal.Footer>
+                                          <Button variant="primary" onClick={HandleAddNewDepartmentSubmitData}>
+                                            Save Changes
+                                          </Button>
+                                        </Modal.Footer>
+                                      </Modal>
+                                  
+                                </section>
+                            </div>
                         </div>
                     </div>
-                  {/* table */}
-                  <div className={showAdditionalFields ? "":"d-flex" }>
-                    <div className={ColClass}>
-                      <MaterialReactTable table={table} />
-                    </div>
-                    {showEditForm && (
-                      <>
-                      <div className={ColClass2}>
-                        <div className="card">
-                          <div className="card-header">
-                           <h6>Edit <b>{apiData && <span>{apiData.facultyName} </span>}</b> Faculty</h6> 
-                          </div>
-                          <div className="card-body">
-                            <form method="post" autoComplete='off'>
-                                <input type="number" name="TargetDepartmentId" id="TargetDepartmentId" defaultValue={departmentData.id}  className='form-control' hidden/>
-                                <div className="form-group f-invalid">
-                                    <label htmlFor="EditFacultyList">Faculty Reference: </label>
-                                    <select ref={EditCategoryFocusEffect} name="EditFacultyList" id="EditFacultyList" className="form-control"  value={selectedFacultyId} onChange={HandleSelectDepartmentValues}>
-                                        <option value="">--Empty--</option>
-                                          {facultyData.map((faculty) => (
-                                            <option key={faculty.id} value={faculty.id}>
-                                              {faculty.facultyName}
-                                            </option>
-                                          ))}
-                                    </select>
-                                    <small className="f-help-block" style={{color: '#dd4b39'}}></small>
-                                </div>
-                                <div className="form-group d-invalid">
-                                    <label htmlFor="editDepartmentName">Department Name: </label>
-                                    <input ref={EdirDepartmentEffect} type="text" name="editDepartmentName" id="editDepartmentName" className="form-control w-100" value={departmentData.deptName}  onChange={handleFacultyNameChange}/>
-                                    <small className="d-help-block" style={{color: '#dd4b39'}}></small>
-                                </div>
-                                <div className="mt-4">
-                                  <button type="submit" onClick={handleSaveEdit} className='btn btn-success pull-right'>Save Update</button>
-                                  <button type="button" onClick={handleCancelUpdate} className='btn btn-default'>Cancel Update</button>
-                                </div>
-                            </form>
-                          </div>
-                        </div>  
-                      </div>
-                      </>
-                      )
-                    }
-                    
-                  </div>
-                </div>
+                </section>
             </div>
-              {/* add modal */}
-              <Modal show={show} onHide={handleClose} animation={false}>
-                <Modal.Header closeButton>
-                  <Modal.Title>Add New Data</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                  <form method="post" >
-                        <div className="form-group faculty-invalid">
-                            <label htmlFor="facultyName">Faculty Reference: </label>
-                            <select ref={AddFacultyFocusEffect} name="facultyName" id="CreatefacultyEntity" className="form-control facultyName" >
-                                <option value="">--Select--</option>
-                                 {listFacultiesOnModal.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                    {item.facultyName} 
-                                </option>
-                                ))}
-                            </select>
-                            <small className="faculty-help-block" style={{color: '#dd4b39'}}></small>
-                        </div>
-                        <div className="form-group department-invalid">
-                            <label htmlFor="deparmentEntityData">Department Name: </label>
-                            <input  ref={AddDepartmentFocusEffect} type="text" name="deparmentName"  id="deparmentEntityData" className="form-control" />
-                            <small className="deparment-help-block" style={{color: '#dd4b39'}}></small>
-                        </div>
-                      </form>
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button variant="primary" onClick={HandleAddNewDepartmentSubmitData}>
-                    Save Changes
-                  </Button>
-                </Modal.Footer>
-              </Modal>
-          
-              </section>
+   
     
       </>
       )}

@@ -9,7 +9,7 @@ import StudentRegistration from '../pages/StudentAuthentication/Register';
 //Admin url manager
 import AdminLoginPage from '../pages/adminUrl/auth/Login';
 import ProfessorsList from '../pages/adminUrl/dashboard/ProfessorsList';
-import AdminIndex from '../pages/adminUrl/dashboard/AdminIndex';
+import AdminDefaultHomePage from '../pages/adminUrl/dashboard/Default';
 import Students from '../pages/adminUrl/dashboard/Students';
 import ViewStudentRecords from '../pages/adminUrl/dashboard/ViewStudentRecords';
 import ApplicationList from '../pages/adminUrl/dashboard/ApplicationList';
@@ -18,6 +18,9 @@ import DepartmentList from '../pages/adminUrl/dashboard/DepartmentList';
 import AdminUserList from '../pages/adminUrl/dashboard/Profile/User';
 import ClassList from '../pages/adminUrl/dashboard/ClassList';
 import SemesterList from '../pages/adminUrl/dashboard/SemesterList';
+import CourseList from '../pages/adminUrl/dashboard/CourseList';
+import SubjectList from './../pages/adminUrl/dashboard/SubjectList';
+import UserList from './../pages/adminUrl/dashboard/UserList';
 
 const GetUserInfo = localStorage.getItem('appData');
 // Parse the JSON string to an object
@@ -27,7 +30,7 @@ var setVerification, UserProperty;
 const AuthUser = () => {
     if (ParseUserDataInfo && Object.prototype.hasOwnProperty.call(ParseUserDataInfo, 'user')) {
         // Access the "app" property
-        UserProperty = ParseUserDataInfo.user.authUser;
+        UserProperty = ParseUserDataInfo.user.person;
         return UserProperty;
     } else {
         return null;
@@ -60,12 +63,9 @@ const App = () => {
         <>
             <Routes>
                 {/* Public routes */}
-                
-                {/* <Route path='/auth/login' element={<PublicRoute><Login /></PublicRoute>}> </Route>
-                <Route path='/auth/register' element={<PublicRoute><Register /></PublicRoute>}> </Route> */}
-            
+          
                 {/*AUTHENTICATED routes for users  [Employee and Employer]*/}
-                <Route path='/admin/' element={<AUTHENTICATED_USER><AdminIndex /></AUTHENTICATED_USER>}> </Route>
+                <Route path='/admin/' element={<AUTHENTICATED_USER><AdminDefaultHomePage /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/admin/students' element={<AUTHENTICATED_USER><Students /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/admin/student/view/:id' element={<AUTHENTICATED_USER><ViewStudentRecords /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/admin/application' element={<AUTHENTICATED_USER><ApplicationList /></AUTHENTICATED_USER>}> </Route>
@@ -73,8 +73,11 @@ const App = () => {
                 <Route path='/admin/department' element={<AUTHENTICATED_USER><DepartmentList /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/admin/class' element={<AUTHENTICATED_USER><ClassList /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/admin/semester' element={<AUTHENTICATED_USER><SemesterList /></AUTHENTICATED_USER>}> </Route>
+                <Route path='/admin/course' element={<AUTHENTICATED_USER><CourseList /></AUTHENTICATED_USER>}> </Route>
+                <Route path='/admin/subject' element={<AUTHENTICATED_USER><SubjectList /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/admin/professors' element={<AUTHENTICATED_USER><ProfessorsList /></AUTHENTICATED_USER>}> </Route>
-                <Route path='/admin/users' element={<AUTHENTICATED_USER><AdminUserList /></AUTHENTICATED_USER>}> </Route>
+                <Route path='/admin/users/:id' element={<AUTHENTICATED_USER><AdminUserList /></AUTHENTICATED_USER>}> </Route>
+                <Route path='/admin/user/list' element={<AUTHENTICATED_USER><UserList /></AUTHENTICATED_USER>}> </Route>
             
                 {/* Authenticated Public */}
                 <Route path='/programmeEntryRequirements' element={<AUTHENTICATED_PUBLIC><ProgrammeEntryRequirements /></AUTHENTICATED_PUBLIC>}> </Route>

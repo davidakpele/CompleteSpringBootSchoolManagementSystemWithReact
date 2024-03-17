@@ -32,7 +32,7 @@ public class SuperUsers implements UserDetails {
     private boolean enabled;
 
     @Getter
-    @OneToMany(mappedBy = "superUsers", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "superUsers", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<SuperUserRecords> superUserRecords;
     @Override
     public String getUsername() {

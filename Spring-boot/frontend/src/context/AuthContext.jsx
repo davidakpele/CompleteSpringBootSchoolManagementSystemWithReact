@@ -61,19 +61,14 @@ export const AuthProvider = ({ children }) => {
    
   }
 
-  const getJwtTokenStorage = ()=> {
+  const getUserRole = ()=> {
     const userToken = localStorage.getItem('appData');
     // Parse the JSON string to an object
-    const UserData = JSON.parse(userToken);
+    const appData = JSON.parse(userToken);
     // Check if the "app" property exists in the parsed object
-    if (UserData && Object.prototype.hasOwnProperty.call(UserData, 'user')) {
+    if (appData && Object.prototype.hasOwnProperty.call(appData, 'user')) {
       // Access the "app" property
-      const AuthorizationToken = UserData.user._jwt_.iot_pack;
-      const userName = UserData.user.authUser;
-      const userId= UserData.user.id;
-      // Get a value from sessionStorage
-      const storedValue = sessionStorage.getItem('application_');
-      return {"token":AuthorizationToken, "username":userName, "uid":userId};
+      return appData.user.role;
     } 
   }
   // Set a Cookie
@@ -157,22 +152,9 @@ export const AuthProvider = ({ children }) => {
     })
   }
 
-  const sendMessages = async ({...data})=>{
-    API.post("/v1", JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json', }
-    })
-      // Handle the response from backend here
-      .then((response) => { 
-
-      })
-      .catch((error) => {
-        
-      })
-  }
-
 
   
-  return <AuthContext.Provider value={{...state, setAppDataToLocalStorage, setCookie, getJwtTokenStorage, sendMessages, FetchUsersList, logout, Userlogin, AuthProvider, useAuth, user, errors, getUser, logOutUser, FullUserDetails , userId}}>
+  return <AuthContext.Provider value={{...state, setAppDataToLocalStorage, setCookie, getUserRole, FetchUsersList, logout, Userlogin, AuthProvider, useAuth, user, errors, getUser, logOutUser, FullUserDetails , userId}}>
     {children}
   </AuthContext.Provider>
 

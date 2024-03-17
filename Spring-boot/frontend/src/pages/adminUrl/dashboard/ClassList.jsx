@@ -11,12 +11,13 @@ import { Link } from "react-router-dom"
 import Swal from 'sweetalert2';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Nav from './components/Header/Nav/NavScroll';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
+import Aside from './components/Header/Menu/Aside';
+import HeaderNav from './components/Header/Nav/HeaderNav';
 
 const ClassList = () => {
     const tableRef = useRef([]);
@@ -334,7 +335,8 @@ const ClassList = () => {
     return (
       <>
     <ToastContainer />
-      <Nav />
+      <HeaderNav />
+      <Aside />
       
       {
         loading ? (
@@ -346,67 +348,78 @@ const ClassList = () => {
               
         ) : (
             <>
-            <section className="content container-fluid">
-                <div className="box">
-                    <div className="box-header with-border">
-                        <h3 className="box-title">Master Student  Data</h3>
-                        <div className="box-tools pull-right">
-                            <button type="button" className="btn btn-box-tool" data-widget="collapse">
-                                <i className="fa fa-minus"></i>
-                            </button>
-                        </div>
-                        <div className="box-body">
-                            <div className="mt-2 mb-4">
-                                <button onClick={OpenCreateNewClassModal} type="button" className="btn btn-sm bg-blue btn-flat"><i className="fa fa-plus"></i> Add Data</button>
-                                <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
-                                    <button id="delete__Btn" title="Delete This Professor" className="mr-4 btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
-                                    <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: "#000000", borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
+            <div className="content-wrapper" >
+                <section className="content  text-dark">
+                    <div className="container-fluid">
+                        <hr className="border-dark"/>
+                        <div className="row">
+                            <div className="col-12 col-sm-12 col-md-12">
+                                <div className="box">
+                                    <div className="box-header with-border">
+                                        <h3 className="box-title">Master Student  Data</h3>
+                                        <div className="box-tools pull-right">
+                                            <button type="button" className="btn btn-box-tool" data-widget="collapse">
+                                                <i className="fa fa-minus"></i>
+                                            </button>
+                                        </div>
+                                        <div className="box-body">
+                                            <div className="mt-2 mb-4">
+                                                <button onClick={OpenCreateNewClassModal} type="button" className="btn btn-sm bg-blue btn-flat"><i className="fa fa-plus"></i> Add Data</button>
+                                                <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
+                                                    <button id="delete__Btn" title="Delete This Professor" className="mr-4 btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
+                                                    <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: "#000000", borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
+                                                </div>
+                                            </div>
+                                            <div className={showAdditionalFields ? "":"d-flex" }>
+                                                <div className="col-md-12">
+                                                    <MaterialReactTable table={table} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className={showAdditionalFields ? "":"d-flex" }>
-                                <div className="col-md-12">
-                                    <MaterialReactTable table={table} />
-                                </div>
+                                
+                                <Modal show={show} onHide={CloseCreateNewClassModal} animation={false}>
+                                    <Modal.Header closeButton>
+                                        <Modal.Title>Add New Data</Modal.Title>
+                                    </Modal.Header>
+                                    <Modal.Body>
+                                        <form method="post" onSubmit={HandleCreateNewClass}>
+                                            <Form.Label htmlFor="Class Name">Class Name:*</Form.Label>  
+                                            <Form.Control type="text" id="title" name="title" className={`form-control ${formErrors.title ? 'is-invalid' : ''}`} defaultValue={classApiData.title}  onChange={(e)=>OnChangeEditInput(e)}/>  
+                                            {formErrors.title && <div className="invalid-feedback">{formErrors.title}</div>}
+                                        </form>   
+                                    </Modal.Body>                
+                                    <Modal.Footer>
+                                        <Button variant="primary" onClick={HandleCreateNewClass}>Save Now</Button>
+                                    </Modal.Footer>
+                                </Modal>
+                                {showEditForm && (
+                                    <>
+                                    <Modal show={showEditModal} onHide={handleClose} animation={false}>
+                                            <Modal.Header closeButton>
+                                            <Modal.Title>Modal heading</Modal.Title>
+                                            </Modal.Header>
+                                            <Modal.Body>
+                                                <form method="post" onSubmit={HandleSaveEditClassData}>
+                                                    <Form.Label htmlFor="Class Name">Class Name:*</Form.Label>  
+                                                    <Form.Control type="text" id="title" name="title" className={`form-control ${formErrors.title ? 'is-invalid' : ''}`} defaultValue={classApiData.title}  onChange={(e)=>OnChangeEditInput(e)}/>  
+                                                    {formErrors.title && <div className="invalid-feedback">{formErrors.title}</div>}
+                                                </form> 
+                                            </Modal.Body>
+                                            <Modal.Footer>
+                                                <Button variant="primary" onClick={HandleSaveEditClassData}>Save Changes</Button>
+                                            </Modal.Footer>
+                                        </Modal>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
+                    </section>
                 </div>
-                
-                <Modal show={show} onHide={CloseCreateNewClassModal} animation={false}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Add New Data</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <form method="post" onSubmit={HandleCreateNewClass}>
-                            <Form.Label htmlFor="Class Name">Class Name:*</Form.Label>  
-                            <Form.Control type="text" id="title" name="title" className={`form-control ${formErrors.title ? 'is-invalid' : ''}`} defaultValue={classApiData.title}  onChange={(e)=>OnChangeEditInput(e)}/>  
-                            {formErrors.title && <div className="invalid-feedback">{formErrors.title}</div>}
-                        </form>   
-                    </Modal.Body>                
-                    <Modal.Footer>
-                        <Button variant="primary" onClick={HandleCreateNewClass}>Save Now</Button>
-                    </Modal.Footer>
-                </Modal>
-                {showEditForm && (
-                    <>
-                       <Modal show={showEditModal} onHide={handleClose} animation={false}>
-                            <Modal.Header closeButton>
-                            <Modal.Title>Modal heading</Modal.Title>
-                            </Modal.Header>
-                            <Modal.Body>
-                                <form method="post" onSubmit={HandleSaveEditClassData}>
-                                    <Form.Label htmlFor="Class Name">Class Name:*</Form.Label>  
-                                    <Form.Control type="text" id="title" name="title" className={`form-control ${formErrors.title ? 'is-invalid' : ''}`} defaultValue={classApiData.title}  onChange={(e)=>OnChangeEditInput(e)}/>  
-                                    {formErrors.title && <div className="invalid-feedback">{formErrors.title}</div>}
-                                </form> 
-                            </Modal.Body>
-                            <Modal.Footer>
-                                <Button variant="primary" onClick={HandleSaveEditClassData}>Save Changes</Button>
-                            </Modal.Footer>
-                        </Modal>
-                    </>
-                )}
-            </section>
+            
+            
             </>
         )
     }

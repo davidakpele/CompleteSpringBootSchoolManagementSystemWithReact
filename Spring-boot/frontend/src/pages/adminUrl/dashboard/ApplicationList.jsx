@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import Nav from './components/Header/Nav/NavScroll';
 import 'datatables.net-dt/css/jquery.dataTables.css'
 import {  useEffect, useRef, useState } from 'react';
 import ApiServices from "../../../services/ApiServices";
@@ -11,13 +10,15 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
+import HeaderNav from './components/Header/Nav/HeaderNav';
+import Aside from './components/Header/Menu/Aside';
 
 const ApplicationList = () => {
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
   const tableRef = useRef(null);
-  const appRef = useRef(null)
+  const appRef = useRef(null) 
   const categoryNameRef = useRef(null)
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
@@ -255,7 +256,8 @@ const ApplicationList = () => {
   return (
     <>
       <ToastContainer />
-      <Nav />
+      <HeaderNav />
+      <Aside />
       {loading ? (
         <>
           <div className="spin" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
@@ -264,15 +266,14 @@ const ApplicationList = () => {
         </>
               
       ) : (
-          <>
-        <section className="content-header">
-          <h1>Administrative <small>Category  Data</small></h1>
-          <ol className="breadcrumb">
-            <li><a href="#"><i className="fa fa-dashboard"></i> Dashboard</a></li>
-            <li className="active">Administrative</li>
-            <li className="active">Category  Data</li>
-          </ol>
-        </section>
+        <>
+          <div className="content-wrapper" >
+            <section className="content  text-dark">
+              <div className="container-fluid">
+                <hr className="border-dark"/>
+                <div className="row">
+                  <div className="col-12 col-sm-12 col-md-12">
+             
         <section className="content container-fluid">
               <div className="box" >
             <div className="box-header with-border">
@@ -350,6 +351,12 @@ const ApplicationList = () => {
             </Modal>
               
               </section>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+       
     
       </>
       )}

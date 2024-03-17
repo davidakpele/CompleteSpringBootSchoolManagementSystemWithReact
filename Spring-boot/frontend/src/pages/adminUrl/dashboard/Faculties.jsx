@@ -1,8 +1,6 @@
 /* eslint-disable no-unused-vars */
 
 /* eslint-disable react/prop-types */
-
-import Nav from './components/Header/Nav/NavScroll';
 import 'datatables.net-dt/css/jquery.dataTables.css'
 import {  useEffect, useRef, useState } from 'react';
 import ApiServices from "../../../services/ApiServices";
@@ -13,6 +11,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
+import HeaderNav from './components/Header/Nav/HeaderNav';
+import Aside from './components/Header/Menu/Aside';
 const Faculties = () => {
   const [show, setShow] = useState(false);
 
@@ -242,8 +242,9 @@ const Faculties = () => {
   const table = useMaterialReactTable({ data, columns });
   return (
     <>
-      <ToastContainer />
-      <Nav />
+    <ToastContainer />
+      <HeaderNav />
+      <Aside />
       {loading ? (
         <>
           <div className="spin" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
@@ -253,108 +254,112 @@ const Faculties = () => {
               
       ) : (
           <>
-        <section className="content-header">
-          <h1>Administrative <small>Faculty Data</small></h1>
-          <ol className="breadcrumb">
-            <li><a href="#"><i className="fa fa-dashboard"></i> Dashboard</a></li>
-            <li className="active">Administrative</li>
-            <li className="active">Faculty</li>
-          </ol>
-        </section>
-        <section className="content container-fluid">
-            <div className="box" >
-                <div className="box-header with-border">
-                <h3 className="box-title">Master Administration Data</h3>
-                <div className="box-tools pull-right">
-                    <button type="button" className="btn btn-box-tool" data-widget="collapse"><i className="fa fa-minus"></i></button>
-                </div>
-                </div>
-                <div className="box-body">
-                    <div className="mt-2 mb-4">
-                        <button onClick={handleShow} type="button" className="btn btn-sm bg-blue btn-flat">
-                            <i className="fa fa-plus"></i> Add New Faculty 
-                        </button>
-                        <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
-                            <button id="delete__Btn" title="Delete This Professor" className="btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
-                            <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: '#000000', borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
+             <div className="content-wrapper" >
+                <section className="content  text-dark">
+                    <div className="container-fluid">
+                      <hr className="border-dark"/>
+                      <div className="row">
+                        <div className="col-12 col-sm-12 col-md-12">
+                            <section className="content container-fluid">
+                                <div className="box" >
+                                    <div className="box-header with-border">
+                                    <h3 className="box-title">Master Administration Data</h3>
+                                    <div className="box-tools pull-right">
+                                        <button type="button" className="btn btn-box-tool" data-widget="collapse"><i className="fa fa-minus"></i></button>
+                                    </div>
+                                    </div>
+                                    <div className="box-body">
+                                        <div className="mt-2 mb-4">
+                                            <button onClick={handleShow} type="button" className="btn btn-sm bg-blue btn-flat">
+                                                <i className="fa fa-plus"></i> Add New Faculty 
+                                            </button>
+                                            <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
+                                                <button id="delete__Btn" title="Delete This Professor" className="btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
+                                                <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: '#000000', borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
+                                            </div>
+                                        </div>
+                                      {/* table */}
+                                      <div className={showAdditionalFields ? "":"d-flex" }>
+                                        <div className={ColClass}>
+                                          <MaterialReactTable table={table} />
+                                        </div>
+                                        {showEditForm && (
+                                          <>
+                                          <div className={ColClass2}>
+                                            <div className="card">
+                                              <div className="card-header">
+                                              <h6>Edit <b>{apiData && <span>{apiData.facultyName} </span>}</b> Faculty</h6> 
+                                              </div>
+                                              <div className="card-body">
+                                                <form method="post" autoComplete='off'>
+                                                    <input type="number" name="TargetFacultyId" id="TargetFacultyId" value={faultyData.id}  className='form-control' hidden/>
+                                                    <input type="number" name="facultyId" id="facultyId" value={faultyData.id}  className='form-control'  hidden/>
+                                                    <div className="form-group c-invalid">
+                                                        <label htmlFor="Editcat_Id">Category Reference: </label>
+                                                        <select ref={EditCategoryFocusEffect} name="Editcat_Id" id="Editcat_Id" className="form-control">
+                                                            <option value="">--Empty--</option>
+                                                            <option value="1" selected={faultyData.catId == "1" ? "selected" : ""}> Distance Learning Institute </option>
+                                                            <option value="2" selected={faultyData.catId == "2" ? "selected" : ""}> Postgraduate </option>
+                                                            <option value="3" selected={faultyData.catId == "3" ? "selected" : ""}> Undergraduate </option>
+                                                        </select>
+                                                        <small className="c-help-block" style={{color: '#dd4b39'}}></small>
+                                                    </div>
+                                                    <div className="form-group m-invalid">
+                                                        <label htmlFor="editfacultyName">Faculty Name: </label>
+                                                        <input ref={EditFacultyFocusEffect} type="text" name="editfacultyName" id="editfacultyName" className="form-control w-100" value={faultyData.ftyName}  onChange={handleFacultyNameChange}/>
+                                                        <small className="m-help-block" style={{color: '#dd4b39'}}></small>
+                                                    </div>
+                                                    <div className="mt-4">
+                                                      <button type="submit" onClick={handleSaveEdit} className='btn btn-success pull-right'>Save Update</button>
+                                                      <button type="button" onClick={handleCancelUpdate} className='btn btn-default'>Cancel Update</button>
+                                                    </div>                            </form>
+                                              </div>
+                                            </div>  
+                                          </div>
+                                          </>
+                                          )
+                                        }
+                                        
+                                      </div>
+                                    </div>
+                                </div>
+                                  {/* add modal */}
+                                  <Modal show={show} onHide={handleClose} animation={false}>
+                                  <Modal.Header closeButton>
+                                    <Modal.Title>Add New Data</Modal.Title>
+                                  </Modal.Header>
+                                    <Modal.Body>
+                                      <form method="post" >
+                                        <div className="form-group category-invalid">
+                                            <label htmlFor="categoryName">Category Reference: </label>
+                                            <select ref={AddCategoryFocusEffect} name="categoryName" className="form-control categoryName" >
+                                                <option value="">--Select--</option>
+                                                <option value="1">Distance Learning Institute </option>
+                                                <option value="2">Postgraduate </option>
+                                                <option value="3">Undergraduate </option>
+                                            </select>
+                                            <small className="category-help-block" style={{color: '#dd4b39'}}></small>
+                                        </div>
+                                        <div className="form-group faculty-invalid">
+                                            <label htmlFor="facultyName">Faculty Name: </label>
+                                            <input  ref={AddFacultyFocusEffect} type="text" name="facultyName" id="facultyName" className="form-control" />
+                                            <small className="faculty-help-block" style={{color: '#dd4b39'}}></small>
+                                        </div>
+                                      </form>
+                                  </Modal.Body>
+                                  <Modal.Footer>
+                                    <Button variant="primary" onClick={handleAddNewFaculty}>
+                                      Save Changes
+                                    </Button>
+                                  </Modal.Footer>
+                                </Modal>
+                            </section>
                         </div>
                     </div>
-                  {/* table */}
-                  <div className={showAdditionalFields ? "":"d-flex" }>
-                    <div className={ColClass}>
-                      <MaterialReactTable table={table} />
-                    </div>
-                    {showEditForm && (
-                      <>
-                      <div className={ColClass2}>
-                        <div className="card">
-                          <div className="card-header">
-                           <h6>Edit <b>{apiData && <span>{apiData.facultyName} </span>}</b> Faculty</h6> 
-                          </div>
-                          <div className="card-body">
-                            <form method="post" autoComplete='off'>
-                                <input type="number" name="TargetFacultyId" id="TargetFacultyId" value={faultyData.id}  className='form-control' hidden/>
-                                <input type="number" name="facultyId" id="facultyId" value={faultyData.id}  className='form-control'  hidden/>
-                                <div className="form-group c-invalid">
-                                    <label htmlFor="Editcat_Id">Category Reference: </label>
-                                    <select ref={EditCategoryFocusEffect} name="Editcat_Id" id="Editcat_Id" className="form-control">
-                                        <option value="">--Empty--</option>
-                                        <option value="1" selected={faultyData.catId == "1" ? "selected" : ""}> Distance Learning Institute </option>
-                                        <option value="2" selected={faultyData.catId == "2" ? "selected" : ""}> Postgraduate </option>
-                                        <option value="3" selected={faultyData.catId == "3" ? "selected" : ""}> Undergraduate </option>
-                                    </select>
-                                    <small className="c-help-block" style={{color: '#dd4b39'}}></small>
-                                </div>
-                                <div className="form-group m-invalid">
-                                    <label htmlFor="editfacultyName">Faculty Name: </label>
-                                    <input ref={EditFacultyFocusEffect} type="text" name="editfacultyName" id="editfacultyName" className="form-control w-100" value={faultyData.ftyName}  onChange={handleFacultyNameChange}/>
-                                    <small className="m-help-block" style={{color: '#dd4b39'}}></small>
-                                </div>
-                                <div className="mt-4">
-                                  <button type="submit" onClick={handleSaveEdit} className='btn btn-success pull-right'>Save Update</button>
-                                  <button type="button" onClick={handleCancelUpdate} className='btn btn-default'>Cancel Update</button>
-                                </div>                            </form>
-                          </div>
-                        </div>  
-                      </div>
-                      </>
-                      )
-                    }
-                    
                   </div>
-                </div>
-            </div>
-              {/* add modal */}
-               <Modal show={show} onHide={handleClose} animation={false}>
-              <Modal.Header closeButton>
-                <Modal.Title>Add New Data</Modal.Title>
-              </Modal.Header>
-                <Modal.Body>
-                  <form method="post" >
-                    <div className="form-group category-invalid">
-                        <label htmlFor="categoryName">Category Reference: </label>
-                        <select ref={AddCategoryFocusEffect} name="categoryName" className="form-control categoryName" >
-                            <option value="">--Select--</option>
-                            <option value="1">Distance Learning Institute </option>
-                            <option value="2">Postgraduate </option>
-                            <option value="3">Undergraduate </option>
-                        </select>
-                        <small className="category-help-block" style={{color: '#dd4b39'}}></small>
-                    </div>
-                    <div className="form-group faculty-invalid">
-                        <label htmlFor="facultyName">Faculty Name: </label>
-                        <input  ref={AddFacultyFocusEffect} type="text" name="facultyName" id="facultyName" className="form-control" />
-                        <small className="faculty-help-block" style={{color: '#dd4b39'}}></small>
-                    </div>
-                  </form>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="primary" onClick={handleAddNewFaculty}>
-                  Save Changes
-                </Button>
-              </Modal.Footer>
-            </Modal>
-              </section>
+                  </section>
+                  </div>
+      
     
       </>
       )}

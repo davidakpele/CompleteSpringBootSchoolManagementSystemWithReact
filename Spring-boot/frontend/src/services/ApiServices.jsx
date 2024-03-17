@@ -4,7 +4,18 @@ import api from "../api/axios";
 import $ from 'jquery'
 
 class ApiServices extends Component{
-    
+
+    getAllUserRole = () => {
+        const userToken = localStorage.getItem('appData');
+        // Parse the JSON string to an object
+        const appData = JSON.parse(userToken);
+        // Check if the "app" property exists in the parsed object
+        if (appData && Object.prototype.hasOwnProperty.call(appData, 'user')) {
+        // Access the "app" property
+            return appData.user.id;
+        }
+    }
+
     FetechFacultiesBaseOnSelectedApplicationId = async ({ ...data }) => {
         const id = data.id;
         try {
@@ -83,6 +94,7 @@ class ApiServices extends Component{
             console.log(error);
         }
     }
+
     auth = async ({ ...data }) => {
        try {
             await api.post("/auth/login",JSON.stringify(data),{
@@ -93,12 +105,15 @@ class ApiServices extends Component{
                     $('.error').show()
                     $('.errormsgContainer').hide()
                     // set the user as logged in and store the token in local storage
-                    const token  =  result.data.token;
+                    
+                    const token = result.data.token;
                     const name = result.data.name;
+                    const WhosIn = result.data.message;
+                    const role = result.data.role;
                     const uid = result.data.id;
                 // Apply setCookie
                this.setCookie('jwt', token, 30);
-                this.setAppDataToLocalStorage(token, name, uid)
+                this.setAppDataToLocalStorage(token, role, WhosIn, name, uid)
                     setTimeout(function () {
                         window.location.replace("/");
                     }, 0);
@@ -137,10 +152,12 @@ class ApiServices extends Component{
                     // set the user as logged in and store the token in local storage
                     const token = result.data.token;
                     const name = result.data.name;
+                    const WhosIn = result.data.message;
+                    const role = result.data.role;
                     const uid = result.data.id;
                     // Apply setCookie
                     this.setCookie('jwt', token, 30);
-                    this.setAppDataToLocalStorage(token, name, uid)
+                    this.setAppDataToLocalStorage(token,role,WhosIn, name, uid)
                     setTimeout(function () {
                         window.location.replace("/admin/");
                     }, 0);
@@ -570,50 +587,6 @@ class ApiServices extends Component{
         }
     }
 
-    setCookie=(cName, cValue, expDays)=> {
-        let date = new Date();
-        date.setTime(date.getTime() + (expDays * 24 * 60 * 60 * 1000));
-        const expires = "expires=" + date.toUTCString();
-        document.cookie = cName + "=" + cValue + "; " + expires + "; path=/";
-    }
-
-    setAppDataToLocalStorage = (token, name, uid) => {
-        // Set an item in localStorage
-        sessionStorage.setItem('jwt', token);
-        const appData = {
-            "user": {
-                "id": uid,
-                "authUser": name,
-                "_jwt_": {
-                    "iot_pack": token,
-                }
-            },
-        };
-         // Convert the object to a JSON string
-        const appDataString = JSON.stringify(appData);
-        // Store the string in localStorage
-        localStorage.setItem('appData', appDataString);
-        localStorage.setItem('jwt', token);
-        sessionStorage.setItem('application_', appDataString)
-    }
-
-    clearCookie = (name) => {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    };
-
-    getUserDetails=() =>{
-        const userToken = localStorage.getItem('appData');
-        // Parse the JSON string to an object
-        const appData = JSON.parse(userToken);
-        // Check if the "app" property exists in the parsed object
-        if (appData && Object.prototype.hasOwnProperty.call(appData, 'user')) {
-            // Access the "app" property
-            const AuthorizationToken = appData.user._jwt_.iot_pack;
-          
-            return AuthorizationToken; 
-        } 
-    }
-
     getAllClasses = async () => {
         try {
             const token = this.getUserDetails();
@@ -742,6 +715,287 @@ class ApiServices extends Component{
         } catch (error) {
             console.error('Authentication failed', error);
         }
+    }
+
+    getAllCourses = async () => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/courses/list", {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+
+    DeleteCourseById = async ({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.post("/private/course/delete", JSON.stringify(data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result.status;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+
+    saveNewCourse = async({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.post("/private/course/new", JSON.stringify(data.data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
+
+    saveEditCourse = async({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.put("/private/course/update/"+data.data.id, JSON.stringify(data.data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
+
+    getCourseById = async (id) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/course/"+id, {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+
+    getAllSubjects = async () => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/subjects/list", {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+    
+    saveNewSubject = async({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.post("/private/subject/new", JSON.stringify(data.data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
+
+    DeleteSubjectById = async ({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.post("/private/subject/delete", JSON.stringify(data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result.status;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+
+    getSubjectById = async (id) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/subject/"+id, {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+
+    saveEditSubject = async({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.put("/private/subject/update/"+data.data.id, JSON.stringify(data.data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
+
+    getAllAdministratorUserById = async (id) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/user/"+id, {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
+    
+    saveEditUserById = async({ ...data }) => {
+        try {
+            console.log(data);
+            const token = this.getUserDetails();
+            const result = await api.put("/private/user/update/"+data.data.UserAuthenticationInfo.id, JSON.stringify(data.data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
+    
+    savePasswordChange = async ({ ...data }) => {
+         try {
+            const token = this.getUserDetails();
+            const result = await api.put("/private/user/changePassword/"+data.changePassword.id, JSON.stringify(data.changePassword), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
+
+    getAllRoleList = async () => {
+       try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/role/list", {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        } 
+    }
+    
+    getSupserUserList = async()=>{
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/users/list/" + this.getAllUserRole(), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+
+    FetchUserById = async (id)=>{
+        try {
+            const token = this.getUserDetails();
+            const result = await api.get("/private/user/"+id, {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+
+    createNewUser = async({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.post("/private/user/add", JSON.stringify(data.data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result;
+        } catch (error) {
+            return error;
+        }
+    }
+
+    DeleteUsers = async ({ ...data }) => {
+        try {
+            const token = this.getUserDetails();
+            const result = await api.post("/private/users/delete", JSON.stringify(data), {
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+                credentials: 'include',
+            });
+            return result.status;
+        } catch (error) {
+            console.error('Authentication failed', error);
+        }
+    }
+
+    setCookie=(cName, cValue, expDays)=> {
+        let date = new Date();
+        date.setTime(date.getTime() + (expDays * 24 * 60 * 60 * 1000));
+        const expires = "expires=" + date.toUTCString();
+        document.cookie = cName + "=" + cValue + "; " + expires + "; path=/";
+    }
+
+    setAppDataToLocalStorage = (token, role, WhosIn, name, uid) => {
+        // Set an item in localStorage
+        sessionStorage.setItem('jwt', token);
+        const appData = {
+            "user": {
+                "id": uid,
+                "authUser": name,
+                "person":WhosIn,
+                "role":role,
+                "_jwt_": {
+                    "iot_pack": token,
+                }
+            },
+        };
+         // Convert the object to a JSON string
+        const appDataString = JSON.stringify(appData);
+        // Store the string in localStorage
+        localStorage.setItem('appData', appDataString);
+        localStorage.setItem('jwt', token);
+        sessionStorage.setItem('application_', appDataString)
+    }
+
+    clearCookie = (name) => {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    };
+
+    getUserDetails=() =>{
+        const userToken = localStorage.getItem('appData');
+        // Parse the JSON string to an object
+        const appData = JSON.parse(userToken);
+        // Check if the "app" property exists in the parsed object
+        if (appData && Object.prototype.hasOwnProperty.call(appData, 'user')) {
+            // Access the "app" property
+            const AuthorizationToken = appData.user._jwt_.iot_pack;
+          
+            return AuthorizationToken; 
+        } 
     }
 
     logout = async () => {

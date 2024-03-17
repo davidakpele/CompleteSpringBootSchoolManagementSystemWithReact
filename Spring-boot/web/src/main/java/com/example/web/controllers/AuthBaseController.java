@@ -12,20 +12,15 @@ import com.example.web.services.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
+
+import org.hibernate.annotations.Fetch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,7 +42,7 @@ public class AuthBaseController {
     private final SubjectServices subjectServices;
     private final CourseServices courseServices;
     private final SemesterServices semesterServices;
-
+    private final RoleService roleService;
     private final Logger logger = LoggerFactory.getLogger(AuthBaseController.class);
     private static final String EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$";
 
@@ -64,7 +59,8 @@ public class AuthBaseController {
             ClassServices sClassServices,
             SubjectServices subjectServices,
             CourseServices courseServices,
-            SemesterServices semesterServices) {
+            SemesterServices semesterServices,
+            RoleService roleService) {
         this.studentDetailsService = studentDetailsService;
         this.professorDetailsService = professorDetailsService;
         this.superUserDetailsService = superUserDetailsService;
@@ -79,6 +75,7 @@ public class AuthBaseController {
         this.subjectServices = subjectServices;
         this.courseServices = courseServices;
         this.semesterServices = semesterServices;
+        this.roleService = roleService;
 
     }
 
@@ -139,18 +136,114 @@ public class AuthBaseController {
         }
     }
 
+    @PostMapping("/user/add")
+    public ResponseEntity<Object> createNewUser(@RequestBody SuperUserDetailsRequestBody superUserDetailsRequestBody) {
+        // Check if the email is of valid format using regex
+        if (superUserDetailsRequestBody.getSuperUsersDTO().getRole() == 4) {
+            // Role is 4, return conflict response
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("Sorry, We can't have multiple Super Users.", "400"));
+        }
+        if (!superUserDetailsRequestBody.getSuperUsersDTO().getEmail().matches(EMAIL_REGEX)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Invalid email format", "400"));
+        }
+        // Check if email already exists
+        else if (checkIfSuperUserEmailAlreadyExists(superUserDetailsRequestBody.getSuperUsersDTO().getEmail())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Sorry..! Email already been used by another User.", "409"));
+        }
+
+        return ResponseEntity.ok(superUserDetailsService.createNewUser(superUserDetailsRequestBody));
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<SuperUsersDTO> getAdminWithRecords(@PathVariable Long userId) {
+        // Check if studentId is null or empty
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null or empty");
+        }
+        // Check if studentId is an integer
+        try {
+            Long parsedStudentId = Long.parseLong(String.valueOf(userId));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid User ID format. Must be an integer");
+        }
+        SuperUsersDTO superUsersDTO = superUserDetailsService.getUserWithRecordsById(userId);
+        if (superUsersDTO == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(superUsersDTO, HttpStatus.OK);
+    }
+
+    @PutMapping("/user/update/{userId}")
+    public ResponseEntity<?> updateUserDetails(@PathVariable Long userId,
+            @RequestBody SuperUserDetailsRequestBody superUserDetailsRequestBody) {
+        try {
+            SuperUsersDTO updateUser = superUserDetailsService.updateUserDetails(userId, superUserDetailsRequestBody);
+            return new ResponseEntity<>("User Details Successfully updated.", HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PutMapping("/user/changePassword/{userId}")
+    public ResponseEntity<String> changePassword(@PathVariable Long userId,
+            @RequestBody ChangePasswordRequestBody request) {
+        // Check if newPassword is equal to confirmPassword
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("New password and confirm password do not match");
+        }
+        if (superUserDetailsService.changePassword(userId, request.getOldPassword(), request.getNewPassword())) {
+            return ResponseEntity.ok("Password changed successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid old password");
+        }
+    }
+
+    @GetMapping("/users/list/{userId}")
+    public List<SuperUsersDTO> getAllUsers(@PathVariable Long userId) {
+        SuperUsersDTO superUsersDTO = superUserDetailsService.getUserWithRecordsById(userId);
+        // Get the role ID from the SuperUsersDTO
+        Long userRoleId = superUsersDTO.getRole();
+
+        // Fetch the role IDs for "admin" and "SUPER ADMINISTRATOR"
+        Long adminRoleId = roleService.findRoleIdByClearance("ADMIN").orElse(null);
+        Long superAdminRoleId = roleService.findRoleIdByClearance("SUPER ADMINISTRATOR").orElse(null);
+        
+        // Check if the role is admin or super admin
+        if (userRoleId != null && (userRoleId.equals(adminRoleId))) {
+            // Fetch all users where SuperUsers.role not equals to the ID of "SUPER
+            List<SuperUsers> uSuperUsers = superUserDetailsService.getAllWithSuperUserRecords()
+                    .stream()
+                    .filter(user -> !user.getRole().equals(superAdminRoleId))
+                    .collect(Collectors.toList());
+            return uSuperUsers.stream().map(SuperUsersDTO::fromEntity).collect(Collectors.toList());
+        } else if(userRoleId != null && (userRoleId.equals(superAdminRoleId))){
+            List<SuperUsers> uSuperUsers = superUserDetailsService.getAllWithSuperUserRecords();
+            List<SuperUsersDTO> superUsersDTOs = uSuperUsers.stream()
+                    .map(SuperUsersDTO::fromEntity)
+                    .collect(Collectors.toList());
+            return superUsersDTOs;
+        }else{
+            return Collections.emptyList();
+        }
+    }
+
+    @PostMapping("/users/delete")
+    public ResponseEntity<Void> deleteUsers(@RequestBody Map<String, List<String>> requestBody) {
+        List<Long> id = requestBody.get("id").stream().map(Long::parseLong).collect(Collectors.toList());
+
+        superUserDetailsService.deleteUsers(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @GetMapping("/student/{studentId}")
     public ResponseEntity<StudentsDTOs> getStudentWithRecords(@PathVariable Long studentId) {
         // Check if studentId is null or empty
         if (studentId == null) {
             throw new IllegalArgumentException("Student ID cannot be null or empty");
         }
-        // Check if studentId is an integer
-        try {
-            Long parsedStudentId = Long.parseLong(String.valueOf(studentId));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid student ID format. Must be an integer");
-        }
+
         StudentsDTOs studentDTO = studentDetailsService.getStudentWithRecordsById(studentId);
         if (studentDTO == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -159,7 +252,8 @@ public class AuthBaseController {
     }
 
     @PutMapping("/student/update/{studentId}")
-    public ResponseEntity<?> updateStudentData(@PathVariable Long studentId, @RequestBody RegisterRequestBody studentData) {
+    public ResponseEntity<?> updateStudentData(@PathVariable Long studentId,
+            @RequestBody RegisterRequestBody studentData) {
         try {
             StudentsDTOs updatedStudent = studentDetailsService.updateStudentData(studentId, studentData);
             return new ResponseEntity<>("Student Details Successfully updated.", HttpStatus.OK);
@@ -202,7 +296,8 @@ public class AuthBaseController {
     }
 
     @PutMapping("/category/update/{categoryId}")
-    public ResponseEntity<Categories> updateCategoryById(@PathVariable Long categoryId,@RequestBody CategoryRequestBody categoryRequestBody) {
+    public ResponseEntity<Categories> updateCategoryById(@PathVariable Long categoryId,
+            @RequestBody CategoryRequestBody categoryRequestBody) {
         Optional<Categories> updatedCategory = categoryDetailsServices.updateCategoryById(categoryId,
                 categoryRequestBody);
 
@@ -211,7 +306,8 @@ public class AuthBaseController {
     }
 
     @PutMapping("/category/data")
-    public ResponseEntity<Categories> updateCategoryStatusById(@RequestParam Long id, @RequestParam(name = "status") boolean newStatus) {
+    public ResponseEntity<Categories> updateCategoryStatusById(@RequestParam Long id,
+            @RequestParam(name = "status") boolean newStatus) {
         Optional<Categories> updatedCategory = categoryDetailsServices.updateCategoryStatus(id, newStatus);
 
         return updatedCategory.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
@@ -238,7 +334,8 @@ public class AuthBaseController {
     }
 
     @PutMapping("/faculty/update/{facultyId}")
-    public ResponseEntity<Faculties> updateFaculty(@PathVariable Long facultyId,@RequestBody FacultyRequestBody facultyRequestBody) {
+    public ResponseEntity<Faculties> updateFaculty(@PathVariable Long facultyId,
+            @RequestBody FacultyRequestBody facultyRequestBody) {
         Optional<Faculties> updatedFaculty = facultiesService.updateFaculty(facultyId, facultyRequestBody);
 
         return updatedFaculty.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
@@ -272,7 +369,8 @@ public class AuthBaseController {
     }
 
     @PutMapping("/department/update/{departmentId}")
-    public ResponseEntity<Departments> updateDepartment(@PathVariable Long departmentId,@RequestBody DepartmentRequestBody departmentRequestBody) {
+    public ResponseEntity<Departments> updateDepartment(@PathVariable Long departmentId,
+            @RequestBody DepartmentRequestBody departmentRequestBody) {
         Optional<Departments> updatedDepartment = departmentsService.updateDepartment(departmentId,
                 departmentRequestBody);
         return updatedDepartment.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
@@ -313,7 +411,8 @@ public class AuthBaseController {
     }
 
     @PutMapping("/features/data")
-    public ResponseEntity<String> updateProfessorFeatures(@RequestParam Long id,@RequestParam(name = "features") boolean newFeatures) {
+    public ResponseEntity<String> updateProfessorFeatures(@RequestParam Long id,
+            @RequestParam(name = "features") boolean newFeatures) {
         try {
             // Call your service method to update features
             boolean updated = professorDetailsService.updateProfessorFeaturesById(id, newFeatures);
@@ -355,8 +454,8 @@ public class AuthBaseController {
     }
 
     @PutMapping("/professor/update/{professorId}")
-    public ResponseEntity<Boolean> updateProfessorAndRecordsById(@PathVariable Long professorId, @RequestBody ProfessorRequestBody request) {
-
+    public ResponseEntity<Boolean> updateProfessorAndRecordsById(@PathVariable Long professorId,
+            @RequestBody ProfessorRequestBody request) {
         boolean updateResult = professorDetailsService.updateProfessorAndRecordsById(professorId, request);
 
         return new ResponseEntity<>(updateResult, HttpStatus.OK);
@@ -416,7 +515,8 @@ public class AuthBaseController {
     }
 
     @PutMapping("/professor/update/appoint/{professorId}")
-    public ResponseEntity<?> updateappointProfessor(@PathVariable Long professorId,@RequestBody ManagementRoleDTO managementRoleDTO) {
+    public ResponseEntity<?> updateappointProfessor(@PathVariable Long professorId,
+            @RequestBody ManagementRoleDTO managementRoleDTO) {
         try {
             managementRoleService.updateManagementRole(professorId, managementRoleDTO);
             return ResponseEntity.ok(HttpStatus.OK);
@@ -457,7 +557,6 @@ public class AuthBaseController {
 
     @PostMapping("/class/delete")
     public ResponseEntity<Void> deleteClasses(@RequestBody Map<String, List<String>> requestBody) {
-
         List<Long> id = requestBody.get("id").stream().map(Long::parseLong).collect(Collectors.toList());
         sClassServices.deleteClassesByIds(id);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -478,20 +577,29 @@ public class AuthBaseController {
         return new ResponseEntity<>(sList, HttpStatus.OK);
     }
 
+    @GetMapping("/subject/{subjectId}")
+    public ResponseEntity<Subjects> getSubjectById(@PathVariable Long subjectId) {
+        Optional<Subjects> subjectOptional = subjectServices.getSubjectById(subjectId);
+        return subjectOptional.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
     @PostMapping("/subject/new")
     public ResponseEntity<Subjects> addNewSubject(@RequestBody SubjectRequestBody subjectRequestBody) {
         Subjects subjects = subjectServices.CreateNewSubject(subjectRequestBody);
         return new ResponseEntity<>(subjects, HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/subject/delete/{subjectId}")
-    public ResponseEntity<Void> deleteSubject(@PathVariable Long subjectId) {
-        subjectServices.deleteSubjectById(subjectId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @PostMapping("/subject/delete")
+    public ResponseEntity<Void> deleteSubject(@RequestBody Map<String, List<String>> requestBody) {
+        List<Long> id = requestBody.get("id").stream().map(Long::parseLong).collect(Collectors.toList());
+        subjectServices.deleteSubjectById(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("/subject/update/{subjectId}")
-    public ResponseEntity<Subjects> updateSubjectById(@PathVariable Long subjectId, @RequestBody SubjectRequestBody subjectRequestBody) {
+    public ResponseEntity<Subjects> updateSubjectById(@PathVariable Long subjectId,
+            @RequestBody SubjectRequestBody subjectRequestBody) {
         Optional<Subjects> updatedSubject = subjectServices.updateSubjectById(subjectId, subjectRequestBody);
         return updatedSubject.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -510,16 +618,25 @@ public class AuthBaseController {
         return new ResponseEntity<>(courses, HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/course/delete/{courseId}")
-    public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
-        courseServices.deleteCourseById(courseId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @PostMapping("/course/delete")
+    public ResponseEntity<Void> deleteCourse(@RequestBody Map<String, List<String>> requestBody) {
+        List<Long> id = requestBody.get("id").stream().map(Long::parseLong).collect(Collectors.toList());
+        courseServices.deleteCourseByIds(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("/course/update/{courseId}")
-    public ResponseEntity<Courses> updateCourseById(@PathVariable Long courseId, @RequestBody CourseRequestBody courseRequestBody) {
+    public ResponseEntity<Courses> updateCourseById(@PathVariable Long courseId,
+            @RequestBody CourseRequestBody courseRequestBody) {
         Optional<Courses> updatedCourse = courseServices.updateCourseById(courseId, courseRequestBody);
         return updatedCourse.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/course/{courseId}")
+    public ResponseEntity<Courses> findCourseById(@PathVariable Long courseId) {
+        Optional<Courses> cOptional = courseServices.getCourseById(courseId);
+        return cOptional.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
@@ -531,7 +648,7 @@ public class AuthBaseController {
     }
 
     @GetMapping("/semester/{semesterId}")
-    public ResponseEntity<Semesters> findubjectById(@PathVariable Long semesterId) {
+    public ResponseEntity<Semesters> findSemesterById(@PathVariable Long semesterId) {
         Optional<Semesters> semesterOptional = semesterServices.getSemesterById(semesterId);
         return semesterOptional.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -559,15 +676,25 @@ public class AuthBaseController {
     }
 
     @PutMapping("/semester/update/{semesterId}")
-    public ResponseEntity<Semesters> updateSemesterById(@PathVariable Long semesterId,
+    public ResponseEntity<?> updateSemesterById(@PathVariable Long semesterId,
             @RequestBody SemesterRequestBody semesterRequestBody) {
+        // Update the semester
         Optional<Semesters> updatedSemester = semesterServices.updateSemesterById(semesterId, semesterRequestBody);
         return updatedSemester.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @GetMapping("/role/list")
+    public List<Role> getAllRoles() {
+        return roleService.getAllRoles();
+    }
+
     private boolean checkIfEmailAlreadyExists(String email) {
         return professorDetailsService.checkIfEmailAlreadyBeenUsed(email);
+    }
+
+    private boolean checkIfSuperUserEmailAlreadyExists(String email) {
+        return superUserDetailsService.existsByEmail(email);
     }
 
 }

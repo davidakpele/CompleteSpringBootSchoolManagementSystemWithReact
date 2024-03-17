@@ -9,6 +9,8 @@ import com.example.web.RequestsBody.SubjectRequestBody;
 import com.example.web.model.Subjects;
 import com.example.web.repository.SubjectsRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class SubjectServices {
     private final SubjectsRepository subjectsRepository;
@@ -31,10 +33,6 @@ public class SubjectServices {
         return subjectsRepository.save(subjects);
     }
 
-    public void deleteSubjectById(Long subjectId) {
-        subjectsRepository.deleteById(subjectId);
-    }
-
     public Optional<Subjects> updateSubjectById(Long subjectId, SubjectRequestBody subjectRequestBody) {
         return subjectsRepository.findById(subjectId)
                 .map(subject -> {
@@ -43,5 +41,14 @@ public class SubjectServices {
                     subject.setSubjectname(subjectRequestBody.getSubjectname());
                     return subjectsRepository.save(subject);
                 });
+    }
+    
+    @Transactional
+    public void deleteSubjectById(List<Long> id) {
+       subjectsRepository.deleteByIdIn(id);
+    }
+
+    public Optional<Subjects> getSubjectById(Long subjectId) {
+        return subjectsRepository.findById(subjectId);
     }
 }

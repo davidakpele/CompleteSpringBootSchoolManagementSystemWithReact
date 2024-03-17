@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import Nav from "./components/Header/Nav/NavScroll"
 import DataTable from 'datatables.net-dt';
 import 'datatables.net-dt/css/jquery.dataTables.css'
 import $ from 'jquery';
@@ -11,6 +10,9 @@ import { Link } from "react-router-dom"
 import Swal from 'sweetalert2';
 import { ToastContainer, toast } from 'react-toastify';
 import userP from '../../../assets/img/admin.png'
+import Aside from "./components/Header/Menu/Aside";
+import HeaderNav from "./components/Header/Nav/HeaderNav";
+import { useNavigate } from 'react-router-dom';
 
 
 const Students = () => {
@@ -21,7 +23,7 @@ const Students = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [isCreateNewProfessor, setIsCreateNewProfessor] = useState(false);
   const [formErrors, setFormErrors] = useState({});
-
+  const navigate = useNavigate();
   const [newUsersDetails, setnewUsersDetails] = useState({
     application: '', faculty: '',
     department: '', program: '',
@@ -203,6 +205,9 @@ const Students = () => {
     });
   }
   
+  const OpenStudentDetails = (id) => {
+    navigate("/admin/student/view/"+id)
+  }
    const handleInput = (e) => {
     const inputValue = e.target.value.replace(/\D/g, ''); // Remove non-numeric characters
       // Format the input as '1234 3444 6757 6757'
@@ -278,10 +283,17 @@ const Students = () => {
         header: "Actions",
         Cell: ({ row }) => (
           <>
-            <div className="d-flex">
-              <button onClick={()=>openEditModal(row.original.id)} className="btn btn-flat btn-default btn-sm btn-primary mr-2">  <span className="fa fa-edit text-default"></span>Edit</button>
-              <Link to={`/student/view/${row.original.id}`} className="btn btn-flat btn-sm btn-success ml-1 mr-1"><span className="fa fa-eye text-default"></span>View Record</Link>
-           </div>
+           <div className="flex d-flex" style={{ display: 'flex' }}>
+            <div className="text-center">
+                <button onClick={() =>openEditModal(row.original.id)} style={{width:'30px', alignItems:'center', textAlign:'center', borderRadius: '3px',boxShadow: 'none',border: '1px solid transparent', background:'#0073b7', }}>
+                    <i className="fa fa-pencil" style={{marginLeft:'3px', color:'#fff'}}></i>
+                </button>&nbsp;
+                <button onClick={() =>OpenStudentDetails(row.original.id)} style={{width:'30px', alignItems:'center', textAlign:'center', borderRadius: '3px',boxShadow: 'none',border: '1px solid transparent', background:'green'}}>
+                    <i className="fa fa-eye" style={{marginLeft:'3px', color:'#fff'}}></i>
+                </button>
+            </div>
+        </div>
+            
           </>
         )
       }
@@ -352,8 +364,6 @@ const Students = () => {
     if (!data.Address) {
         errors.Address = 'Address is required';
     }
- 
-  
     return errors;
   }
 
@@ -412,12 +422,12 @@ const Students = () => {
       $('.errormsgContainer').show()
       return false;
     }else if (studentData.email != "") {
-            if (!EmailRegaxValidation.test(studentData.email)) {
-                $('.error').show()
-                $('.errormsgContainer').html("<span>Invalid email address..! Please enter a valid email address.*</span>");
-                return false;
-            }
-        }
+      if (!EmailRegaxValidation.test(studentData.email)) {
+        $('.error').show()
+        $('.errormsgContainer').html("<span>Invalid email address..! Please enter a valid email address.*</span>");
+        return false;
+    }
+    }
     if (studentData.mobile == null || studentData.mobile =="") {
       $('.error').html("<span>Please Enter Your Mobile Number.</span>")
       $('.errormsgContainer').show()
@@ -726,7 +736,9 @@ const Students = () => {
   return (
     <>
       <ToastContainer />
-      <Nav />
+       <HeaderNav/>
+
+      <Aside/>
       {loading ? (
         <>
           <div className="spin" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
@@ -736,228 +748,240 @@ const Students = () => {
               
       ) : (
         <>
-     <section className="content container-fluid">
-        <div className="box">
-          <div className="box-header with-border">
-            <h3 className="box-title">Master Student  Data</h3>
-            <div className="box-tools pull-right">
-              <button type="button" className="btn btn-box-tool" data-widget="collapse">
-                <i className="fa fa-minus"></i>
-              </button>
-            </div>
-            <div className="box-body">
-              <div className="mt-2 mb-4">
-                <button onClick={openAddNewModal} type="button" className="btn btn-sm bg-blue btn-flat"><i className="fa fa-plus"></i> Add Data</button>
-                  <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
-                    <button id="delete__Btn" title="Delete This Student" className="mr-4 btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
-                    <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: "#000000", borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
-                  </div>
-                </div>
-                  <div className={showAdditionalFields ? "":"d-flex" }>
-                    <div className={ColClass}>
-                      <MaterialReactTable table={table} />
-                    </div>
-                     {showEditForm && (
-                      <>
-                      <div className={ColClass2}>
-                        <div className="card">
-                          <div className="card-header">
-                            <h6 style={{fontFamily:'sans-serif', textAlign:'center', fontStyle:'normal', fontWeight:'bolder'}}>Edit Student</h6> 
+         <div className="content-wrapper" >
+            <section className="content  text-dark">
+              <div className="container-fluid">
+                <hr className="border-dark"/>
+                <div className="row">
+                  <div className="col-12 col-sm-12 col-md-12">
+               <section className="content container-fluid">
+                      <div className="box">
+                        <div className="box-header with-border">
+                          <h3 className="box-title">Master Student  Data</h3>
+                          <div className="box-tools pull-right">
+                            <button type="button" className="btn btn-box-tool" data-widget="collapse">
+                              <i className="fa fa-minus"></i>
+                            </button>
                           </div>
-                          <div className="card-body">
-                             <div className="errormsgContainer error error-ico" style={{display:'none'}}></div>
-                             <form  method="post" acceptCharset="utf-8" encType="multipart/form-data" autoComplete="off" onSubmit={HandleSubmitEditForm}>
-                                <div className="row">
-                                <div className="col-sm-12 col-sm-offset-12">
-                                    <label htmlFor="firstname">First Name:<span className="text-danger">*</span></label>
-                                    <input type="text" className="form-control w-100" name="firstname" id="firstname" placeholder="Last Name:" value={studentData.firstname} onChange={handleInputChange}/>
-                                  </div>
-                                  <div className="col-md-12 col-sm-12 col-xs-12">
-                                    <label htmlFor="Surname">Surname:<span className="text-danger">*</span></label>
-                                    <input type="text" className="form-control w-100" name="surname" id="Surname" value={studentData.surname} placeholder="Surname" onChange={handleInputChange}/>
-                                  </div>
-                                  <div className="col-md-12 col-sm-12 col-xs-12">
-                                    <label htmlFor="email">Student Email:<span className="text-danger">*</span></label>
-                                    <input type="email" className="form-control w-100" name="email" value={studentData.email} id="email" placeholder="Student Email" onChange={handleInputChange}/>
-                                  </div>
-                                  <div className="col-md-12 col-sm-12 col-xs-12">
-                                    <label htmlFor="tel">Mobile:<span className="text-danger">*</span></label>
-                                    <input type="tel" className="form-control w-100" name="mobile" value={studentData.mobile} id="mobile" placeholder="+(234) 5435-4542-34" onChange={handleInputChange}/>
-                                  </div>
-                                  <div className="col-md-12 col-sm-12 col-xs-12">
-                                    <label htmlFor="DBO:">Date of Birth:<span className="text-danger">*</span></label>
-                                    <input type="date" className="form-control w-100" name="dateOfBirth" id="DOB" value={studentData.dateOfBirth} onChange={handleInputChange}/>
-                                  </div>
-                                  <div className="col-md-12 col-sm-12 col-xs-12">
-                                    <label htmlFor="gender">Gender</label>
-                                    <select name="gender" id="gender" className="form-control w-100 select2" onChange={handleInputChange}>
-                                      <option value="">--Empty--</option>
-                                      <option value="Male" selected={studentData.gender === 'Male'}>Male</option>
-                                      <option value="Female" selected={studentData.gender === 'Female'}>Female</option>
-                                    </select>
-                                  </div>
-                                  <div className="col-md-12 col-sm-12 col-xs-12">
-                                    <label htmlFor="relationShipStatus">Relationship Status </label>
-                                    <select name="relationShipStatus" id="relationShipStatus" className="form-control w-100 select2"  onChange={handleInputChange}>
-                                      <option value="Single" selected={studentData.relationShipStatus === 'Single'}>Single</option>
-                                      <option value="Divored" selected={studentData.relationShipStatus === 'Divored'}>Divored</option>
-                                      <option value="Married" selected={studentData.relationShipStatus === 'Married'}>Married</option>
-                                      <option value="Complicated" selected={studentData.relationShipStatus === 'Complicated'}>Complicated</option>
-                                      <option value="Window" selected={studentData.relationShipStatus === 'Window'}>Window</option>
-                                      <option value="In-Contract Marrige" selected={studentData.relationShipStatus === 'In-Contract Marrige'}>In-Contract Marrige</option>
-                                    </select>
-                                  </div>
-                                  <div className="col-md-12 col-sm-12 col-xs-12 mt-3">
-                                    <button type="button"  onClick={CancelEditModalForm}  className='btn btn-default'>Cancel Update</button>
-                                    <button type="submit" id="isAddProfessor" className="ml-4 btn btn-flat bg-purple" style={{ width: "200px" }}><i className="fa fa-save"></i> Save Edit</button>
-                                  </div>
+                          <div className="box-body">
+                            <div className="mt-2 mb-4">
+                              <button onClick={openAddNewModal} type="button" className="btn btn-sm bg-blue btn-flat"><i className="fa fa-plus"></i> Add Data</button>
+                                <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
+                                  <button id="delete__Btn" title="Delete This Student" className="mr-4 btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
+                                  <button disabled="disabled" className="btn btn-sm" style={{ backgroundColor: "#000000", borderRadius: "25px" }}><span className="pull-left" id="deletebadge" style={{ color: "#fff" }}>Selected</span></button>
+                                </div>
                               </div>
-                               
-                            </form>		
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                      )}
-
-                      {isCreateNewProfessor && (
-                        <>
-                        <div className={ColClass2}>
-                          <div className="card">
-                            <div className="card-header">
-                              <h6 style={{fontFamily:'sans-serif', textAlign:'center', fontStyle:'normal', fontWeight:'bolder'}}>Register New Student</h6> 
-                            </div>
-                                <div className="card-body">
-                                  <form id="addstudent" onSubmit={saveNewStudentFormData} method="post" acceptCharset="utf-8" encType="multipart/form-data" autoComplete="off">
-                                      <div className="box-body">
-                                        <div className="row">
-                                          <div className="col-md-12 col-sm-12 col-xs-12">
-                                            <label htmlFor="Application">Application Type:</label>
-                                            <select className={`form-control ${formErrors.application ? 'is-invalid' : ''}`} name="application" id="Application"
-                                              defaultValue={newUsersDetails.application} onChange={handleInputChangeOnApplicationType}>
-                                                <option value="">--Select--</option>
-                                                <option value="1"> Distance Learning Institute </option>
-                                                <option value="2"> Postgraduate </option>
-                                                <option value="3"> Undergraduate </option>
-                                            </select>
-                                            {formErrors.application && <div className="invalid-feedback">{formErrors.application}</div>}
-                                          </div>
-                                          <div className="col-md-12 col-sm-12 col-xs-12">
-                                              <label htmlFor="Faculty">Faculty:</label>
-                                              <select  name="faculty"  className={`form-control ${formErrors.faculty ? 'is-invalid' : ''}`}  id="Faculty"  onChange={handleInputChangeOnFacultyField}>
-                                                <option value="">--Empty--</option>
-                                              </select>
-                                               {formErrors.faculty && <div className="invalid-feedback">{formErrors.faculty}</div>}
-                                          </div>
-                                          <div className="col-md-12 col-sm-12 col-xs-12">
-                                            <label htmlFor="Department">Department:</label>
-                                            <select name="department" className={`form-control ${formErrors.department ? 'is-invalid' : ''}`} id="Department" onChange={handleInputChangeOnDepartmentField}>
-                                              <option value="">--Empty--</option>
-                                            </select>
-                                            {formErrors.department && <div className="invalid-feedback">{formErrors.department}</div>}
-                                          </div>
-                                          <div className="col-md-12 col-sm-12 col-xs-12">
-                                              <label htmlFor="Program">Program:</label>
-                                              <select name="program" className={`form-control ${formErrors.program ? 'is-invalid' : ''}`} id="Program"
-                                                defaultValue={newUsersDetails.program}  onChange={handleInputChangeOnProgramField}>
-                                                  <option value="">--Empty--</option>
-                                              </select> 
-                                              {formErrors.program && <div className="invalid-feedback">{formErrors.program}</div>}
-                                          </div>
-                                          <div className="col-md-12 col-sm-12 col-xs-12">
-                                              <label htmlFor="NationalIdentificationNumber">NIN: <small>(National Identification Number)</small></label>
-                                              <input name="nationalIdentificationNumber" id="NationalIdentificationNumber" className={`form-control w-100 ${formErrors.nationalIdentificationNumber ? 'is-invalid' : ''}`} 
-                                              max="1000000000009999" step="1" type="text" placeholder="National Identification Number:" 
-                                              autoComplete="off" onChange={handleInput} value={newUsersDetails.nationalIdentificationNumber}/>
-                                            {formErrors.nationalIdentificationNumber && <div className="invalid-feedback">{formErrors.nationalIdentificationNumber}</div>}
-                                          </div>
-                                          <div className="col-md-12 col-sm-12 col-xs-12 EntryDevparent">
-                                              <div className="EntryDevchild">
-                                                  <label htmlFor="Entrylevel">Entry Level:</label>
-                                                  <select className={`form-control ${formErrors.entrylevel ? 'is-invalid' : ''}`} defaultValue={newUsersDetails.entrylevel}  name="entrylevel" id="Entrylevel" onChange={handleInputChangeOnEntryLevelField}>
-                                                    <option  value="">--Empty--</option>
+                                <div className={showAdditionalFields ? "":"d-flex" }>
+                                  <div className={ColClass}>
+                                    <MaterialReactTable table={table} />
+                                  </div>
+                                  {showEditForm && (
+                                    <>
+                                    <div className={ColClass2}>
+                                      <div className="card">
+                                        <div className="card-header">
+                                          <h6 style={{fontFamily:'sans-serif', textAlign:'center', fontStyle:'normal', fontWeight:'bolder'}}>Edit Student</h6> 
+                                        </div>
+                                        <div className="card-body">
+                                          <div className="errormsgContainer error error-ico" style={{display:'none'}}></div>
+                                          <form  method="post" acceptCharset="utf-8" encType="multipart/form-data" autoComplete="off" onSubmit={HandleSubmitEditForm}>
+                                              <div className="row">
+                                                <div className="col-sm-12 col-sm-offset-12">
+                                                  <label htmlFor="firstname">First Name:<span className="text-danger">*</span></label>
+                                                  <input type="text" className="form-control w-100" name="firstname" id="firstname" placeholder="Last Name:" value={studentData.firstname} onChange={handleInputChange}/>
+                                                </div>
+                                                <div className="col-md-12 col-sm-12 col-xs-12">
+                                                  <label htmlFor="Surname">Surname:<span className="text-danger">*</span></label>
+                                                  <input type="text" className="form-control w-100" name="surname" id="Surname" value={studentData.surname} placeholder="Surname" onChange={handleInputChange}/>
+                                                </div>
+                                                <div className="col-md-12 col-sm-12 col-xs-12">
+                                                  <label htmlFor="email">Student Email:<span className="text-danger">*</span></label>
+                                                  <input type="email" className="form-control w-100" name="email" value={studentData.email} id="email" placeholder="Student Email" onChange={handleInputChange}/>
+                                                </div>
+                                                <div className="col-md-12 col-sm-12 col-xs-12">
+                                                  <label htmlFor="tel">Mobile:<span className="text-danger">*</span></label>
+                                                  <input type="tel" className="form-control w-100" name="mobile" value={studentData.mobile} id="mobile" placeholder="+(234) 5435-4542-34" onChange={handleInputChange}/>
+                                                </div>
+                                                <div className="col-md-12 col-sm-12 col-xs-12">
+                                                  <label htmlFor="DBO:">Date of Birth:<span className="text-danger">*</span></label>
+                                                  <input type="date" className="form-control w-100" name="dateOfBirth" id="DOB" value={studentData.dateOfBirth} onChange={handleInputChange}/>
+                                                </div>
+                                                <div className="col-md-12 col-sm-12 col-xs-12">
+                                                  <label htmlFor="gender">Gender</label>
+                                                  <select name="gender" id="gender" className="form-control w-100 select2" onChange={handleInputChange}>
+                                                    <option value="">--Empty--</option>
+                                                    <option value="Male" selected={studentData.gender === 'Male'}>Male</option>
+                                                    <option value="Female" selected={studentData.gender === 'Female'}>Female</option>
                                                   </select>
-                                                  {formErrors.entrylevel && <div className="invalid-feedback">{formErrors.entrylevel}</div>}
-                                              </div>
-                                          </div>
-                                          <div className="col-md-12 col-sm-12 col-xs-12">
-                                              <div style={{ marginTop: "20px", marginLeft: "20px", fontWeight: "bold", fontSize: "20px", textDecoration: "underline" }}><p>Personal Details</p></div>
-                                                  </div>
-                                                      <div className="col-md-12 col-sm-12 col-xs-12">
-                                                          <lable htmlFor="Firstname">First Name:*</lable>
-                                                          <input type="text" className={`form-control w-100 ${formErrors.firstname ? 'is-invalid' : ''}`} name="firstname" id="Firstname" placeholder="Firstname:" 
-                                                          defaultValue={newUsersDetails.firstname}  onChange={(e)=>OnChangeEditInput(e)}/>
-                                                          {formErrors.firstname && <div className="invalid-feedback">{formErrors.firstname}</div>}
-                                                      </div>	
-                                                      <div className="col-md-12 col-sm-12 col-xs-12">
-                                                          <lable htmlFor="Surname">Surname*</lable>
-                                                          <input type="text" className={`form-control w-100 ${formErrors.surname ? 'is-invalid' : ''}`} name="surname" id="surname" placeholder="Surname" autoComplete="off" 
-                                                          defaultValue={newUsersDetails.surname}  onChange={(e)=>OnChangeEditInput(e)}/>
-                                                           {formErrors.surname && <div className="invalid-feedback">{formErrors.surname}</div>}
-                                                      </div>
-                                                      <div className="col-md-12 col-sm-12 col-xs-12">
-                                                          <lable htmlFor="Dob">Date Of Birth*</lable>
-                                                          <input type="date" className={`form-control w-100 ${formErrors.dob ? 'is-invalid' : ''}`} id="Dob" name="dob" placeholder="Date Of Birth:" 
-                                                          defaultValue={newUsersDetails.dob}  onChange={(e)=>OnChangeEditInput(e)} autoComplete="off" />
-                                                           {formErrors.dob && <div className="invalid-feedback">{formErrors.dob}</div>}
-                                                        </div>
-                                                      <div className="col-md-12 col-sm-12 col-xs-12">
-                                                          <lable htmlFor="Gender">Gender*</lable>
-                                                          <select className={`form-control w-100 ${formErrors.gender ? 'is-invalid' : ''}`} placeholder="Gender" name="gender" id="Gender"
-                                                          defaultValue={newUsersDetails.gender} onChange={handleInputChangeOnGenderOptions} autoComplete="off" >
-                                                              <option value="">--Select--</option>
-                                                              <option value="Male">Male</option>
-                                                              <option value="Female">Female</option>
-                                                          </select>
-                                                          {formErrors.gender && <div className="invalid-feedback">{formErrors.gender}</div>}
-                                                      </div>
-                                                      <div className="col-md-12 col-sm-12 col-xs-12">
-                                                          <lable htmlFor="Email">Email*</lable>
-                                                          <input type="email" className={`form-control w-100 ${formErrors.email ? 'is-invalid' : ''}`}  name="email" placeholder="Email:" id="Email"
-                                                          defaultValue={newUsersDetails.email}  onChange={(e)=>OnChangeEditInput(e)} autoComplete="off" />
-                                                        {formErrors.email && <div className="invalid-feedback">{formErrors.email}</div>}
-                                                      </div>
-                                                      <div className="col-md-12 col-sm-12 col-xs-12">
-                                                          <lable htmlFor="Relationshipstatus">Relationship Status*</lable>
-                                                          <select name="relationshipstatus" className={`form-control w-100 ${formErrors.relationshipstatus ? 'is-invalid' : ''}`}  id="Relationshipstatus"
-                                                          defaultValue={newUsersDetails.relationshipstatus} onChange={handleInputChangeOnRelationShipStatus} autoComplete="off" >
-                                                              <option value="">--Select--</option>
-                                                              <option value="Divored">Divored</option>
-                                                              <option value="Single">Single</option>
-                                                              <option value="Married">Married</option>
-                                                              <option value="Complicated">Complicated</option>
-                                                          </select>
-                                                           {formErrors.relationshipstatus && <div className="invalid-feedback">{formErrors.relationshipstatus}</div>}
-                                                      </div>
-                                                      <div className="col-md-12">
-                                                        <lable htmlFor="Telephone">Tel*</lable>
-                                                        <input type="tel"  className={`form-control w-100 ${formErrors.telephone ? 'is-invalid' : ''}`} defaultValue={newUsersDetails.telephone}  onChange={(e)=>OnChangeEditInput(e)} id="Telephone"  name="telephone" placeholder="+(234) 8032 4552 09" autoComplete="off" maxLength="19" />
-                                                         {formErrors.telephone && <div className="invalid-feedback">{formErrors.telephone}</div>}
-                                                      </div>
-                                
-                                                      <div className="col-md-12" id="guidanceform"></div>
-                                                      <div className="col-md-12">
-                                                       <div style={{ marginTop: "20px" }}>
-                                                          <button  onClick={CancelCreateModalForm} type="reset" className="btn btn-flat btn-default pull-left">Cancel</button>
-                                                          <button type="submit" id="isAddProfessor" className="btn btn-success pull-right">
-                                                            <i className="fa fa-save"></i> Save
-                                                          </button>
-                                                        </div>
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                </form>
-                                              </div>
+                                                </div>
+                                                <div className="col-md-12 col-sm-12 col-xs-12">
+                                                  <label htmlFor="relationShipStatus">Relationship Status </label>
+                                                  <select name="relationShipStatus" id="relationShipStatus" className="form-control w-100 select2"  onChange={handleInputChange}>
+                                                    <option value="Single" selected={studentData.relationShipStatus === 'Single'}>Single</option>
+                                                    <option value="Divored" selected={studentData.relationShipStatus === 'Divored'}>Divored</option>
+                                                    <option value="Married" selected={studentData.relationShipStatus === 'Married'}>Married</option>
+                                                    <option value="Complicated" selected={studentData.relationShipStatus === 'Complicated'}>Complicated</option>
+                                                    <option value="Window" selected={studentData.relationShipStatus === 'Window'}>Window</option>
+                                                    <option value="In-Contract Marrige" selected={studentData.relationShipStatus === 'In-Contract Marrige'}>In-Contract Marrige</option>
+                                                  </select>
+                                                </div>
+                                                <div className="col-md-12 col-sm-12 col-xs-12 mt-3 d-flex ">
+                                                  <button type="button"  onClick={CancelEditModalForm}  className='btn btn-default pull-left'>Cancel Update</button>
+                                                  <button type="submit" id="isAddProfessor" className="ml-4 btn bg-purple pull-right"> Save Edit</button>
+                                                </div>
                                             </div>
+                                            
+                                          </form>		
                                           </div>
-                        </>
-                      )}
-                 </div>
-                   
+                                        </div>
+                                      </div>
+                                    </>
+                                    )}
+
+                                    {isCreateNewProfessor && (
+                                      <>
+                                      <div className={ColClass2}>
+                                        <div className="card">
+                                          <div className="card-header">
+                                            <h6 style={{fontFamily:'sans-serif', textAlign:'center', fontStyle:'normal', fontWeight:'bolder'}}>Register New Student</h6> 
+                                          </div>
+                                              <div className="card-body">
+                                                <form id="addstudent" onSubmit={saveNewStudentFormData} method="post" acceptCharset="utf-8" encType="multipart/form-data" autoComplete="off">
+                                                    <div className="box-body">
+                                                      <div className="row">
+                                                        <div className="col-md-12 col-sm-12 col-xs-12">
+                                                          <label htmlFor="Application">Application Type:</label>
+                                                          <select className={`form-control ${formErrors.application ? 'is-invalid' : ''}`} name="application" id="Application"
+                                                            defaultValue={newUsersDetails.application} onChange={handleInputChangeOnApplicationType}>
+                                                              <option value="">--Select--</option>
+                                                              <option value="1"> Distance Learning Institute </option>
+                                                              <option value="2"> Postgraduate </option>
+                                                              <option value="3"> Undergraduate </option>
+                                                          </select>
+                                                          {formErrors.application && <div className="invalid-feedback">{formErrors.application}</div>}
+                                                        </div>
+                                                        <div className="col-md-12 col-sm-12 col-xs-12">
+                                                            <label htmlFor="Faculty">Faculty:</label>
+                                                            <select  name="faculty"  className={`form-control ${formErrors.faculty ? 'is-invalid' : ''}`}  id="Faculty"  onChange={handleInputChangeOnFacultyField}>
+                                                              <option value="">--Empty--</option>
+                                                            </select>
+                                                            {formErrors.faculty && <div className="invalid-feedback">{formErrors.faculty}</div>}
+                                                        </div>
+                                                        <div className="col-md-12 col-sm-12 col-xs-12">
+                                                          <label htmlFor="Department">Department:</label>
+                                                          <select name="department" className={`form-control ${formErrors.department ? 'is-invalid' : ''}`} id="Department" onChange={handleInputChangeOnDepartmentField}>
+                                                            <option value="">--Empty--</option>
+                                                          </select>
+                                                          {formErrors.department && <div className="invalid-feedback">{formErrors.department}</div>}
+                                                        </div>
+                                                        <div className="col-md-12 col-sm-12 col-xs-12">
+                                                            <label htmlFor="Program">Program:</label>
+                                                            <select name="program" className={`form-control ${formErrors.program ? 'is-invalid' : ''}`} id="Program"
+                                                              defaultValue={newUsersDetails.program}  onChange={handleInputChangeOnProgramField}>
+                                                                <option value="">--Empty--</option>
+                                                            </select> 
+                                                            {formErrors.program && <div className="invalid-feedback">{formErrors.program}</div>}
+                                                        </div>
+                                                        <div className="col-md-12 col-sm-12 col-xs-12">
+                                                            <label htmlFor="NationalIdentificationNumber">NIN: <small>(National Identification Number)</small></label>
+                                                            <input name="nationalIdentificationNumber" id="NationalIdentificationNumber" className={`form-control w-100 ${formErrors.nationalIdentificationNumber ? 'is-invalid' : ''}`} 
+                                                            max="1000000000009999" step="1" type="text" placeholder="National Identification Number:" 
+                                                            autoComplete="off" onChange={handleInput} value={newUsersDetails.nationalIdentificationNumber}/>
+                                                          {formErrors.nationalIdentificationNumber && <div className="invalid-feedback">{formErrors.nationalIdentificationNumber}</div>}
+                                                        </div>
+                                                        <div className="col-md-12 col-sm-12 col-xs-12 EntryDevparent">
+                                                            <div className="EntryDevchild">
+                                                                <label htmlFor="Entrylevel">Entry Level:</label>
+                                                                <select className={`form-control ${formErrors.entrylevel ? 'is-invalid' : ''}`} defaultValue={newUsersDetails.entrylevel}  name="entrylevel" id="Entrylevel" onChange={handleInputChangeOnEntryLevelField}>
+                                                                  <option  value="">--Empty--</option>
+                                                                </select>
+                                                                {formErrors.entrylevel && <div className="invalid-feedback">{formErrors.entrylevel}</div>}
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-12 col-sm-12 col-xs-12">
+                                                            <div style={{ marginTop: "20px", marginLeft: "20px", fontWeight: "bold", fontSize: "20px", textDecoration: "underline" }}><p>Personal Details</p></div>
+                                                                </div>
+                                                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                                                        <lable htmlFor="Firstname">First Name:*</lable>
+                                                                        <input type="text" className={`form-control w-100 ${formErrors.firstname ? 'is-invalid' : ''}`} name="firstname" id="Firstname" placeholder="Firstname:" 
+                                                                        defaultValue={newUsersDetails.firstname}  onChange={(e)=>OnChangeEditInput(e)}/>
+                                                                        {formErrors.firstname && <div className="invalid-feedback">{formErrors.firstname}</div>}
+                                                                    </div>	
+                                                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                                                        <lable htmlFor="Surname">Surname*</lable>
+                                                                        <input type="text" className={`form-control w-100 ${formErrors.surname ? 'is-invalid' : ''}`} name="surname" id="surname" placeholder="Surname" autoComplete="off" 
+                                                                        defaultValue={newUsersDetails.surname}  onChange={(e)=>OnChangeEditInput(e)}/>
+                                                                        {formErrors.surname && <div className="invalid-feedback">{formErrors.surname}</div>}
+                                                                    </div>
+                                                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                                                        <lable htmlFor="Dob">Date Of Birth*</lable>
+                                                                        <input type="date" className={`form-control w-100 ${formErrors.dob ? 'is-invalid' : ''}`} id="Dob" name="dob" placeholder="Date Of Birth:" 
+                                                                        defaultValue={newUsersDetails.dob}  onChange={(e)=>OnChangeEditInput(e)} autoComplete="off" />
+                                                                        {formErrors.dob && <div className="invalid-feedback">{formErrors.dob}</div>}
+                                                                      </div>
+                                                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                                                        <lable htmlFor="Gender">Gender*</lable>
+                                                                        <select className={`form-control w-100 ${formErrors.gender ? 'is-invalid' : ''}`} placeholder="Gender" name="gender" id="Gender"
+                                                                        defaultValue={newUsersDetails.gender} onChange={handleInputChangeOnGenderOptions} autoComplete="off" >
+                                                                            <option value="">--Select--</option>
+                                                                            <option value="Male">Male</option>
+                                                                            <option value="Female">Female</option>
+                                                                        </select>
+                                                                        {formErrors.gender && <div className="invalid-feedback">{formErrors.gender}</div>}
+                                                                    </div>
+                                                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                                                        <lable htmlFor="Email">Email*</lable>
+                                                                        <input type="email" className={`form-control w-100 ${formErrors.email ? 'is-invalid' : ''}`}  name="email" placeholder="Email:" id="Email"
+                                                                        defaultValue={newUsersDetails.email}  onChange={(e)=>OnChangeEditInput(e)} autoComplete="off" />
+                                                                      {formErrors.email && <div className="invalid-feedback">{formErrors.email}</div>}
+                                                                    </div>
+                                                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                                                        <lable htmlFor="Relationshipstatus">Relationship Status*</lable>
+                                                                        <select name="relationshipstatus" className={`form-control w-100 ${formErrors.relationshipstatus ? 'is-invalid' : ''}`}  id="Relationshipstatus"
+                                                                        defaultValue={newUsersDetails.relationshipstatus} onChange={handleInputChangeOnRelationShipStatus} autoComplete="off" >
+                                                                            <option value="">--Select--</option>
+                                                                            <option value="Divored">Divored</option>
+                                                                            <option value="Single">Single</option>
+                                                                            <option value="Married">Married</option>
+                                                                            <option value="Complicated">Complicated</option>
+                                                                        </select>
+                                                                        {formErrors.relationshipstatus && <div className="invalid-feedback">{formErrors.relationshipstatus}</div>}
+                                                                    </div>
+                                                                    <div className="col-md-12">
+                                                                      <lable htmlFor="Telephone">Tel*</lable>
+                                                                      <input type="tel"  className={`form-control w-100 ${formErrors.telephone ? 'is-invalid' : ''}`} defaultValue={newUsersDetails.telephone}  onChange={(e)=>OnChangeEditInput(e)} id="Telephone"  name="telephone" placeholder="+(234) 8032 4552 09" autoComplete="off" maxLength="19" />
+                                                                      {formErrors.telephone && <div className="invalid-feedback">{formErrors.telephone}</div>}
+                                                                    </div>
+                                              
+                                                                    <div className="col-md-12" id="guidanceform"></div>
+                                                                    <div className="col-md-12">
+                                                                    <div style={{ marginTop: "20px" }}>
+                                                                        <button  onClick={CancelCreateModalForm} type="reset" className="btn btn-flat btn-default pull-left">Cancel</button>
+                                                                        <button type="submit" id="isAddProfessor" className="btn btn-success pull-right">
+                                                                          <i className="fa fa-save"></i> Save
+                                                                        </button>
+                                                                      </div>
+                                                                    </div>
+                                                                  </div>
+                                                                </div>
+                                                              </form>
+                                                            </div>
+                                                          </div>
+                                                        </div>
+                                      </>
+                                    )}
+                              </div>
+                                
+                            </div>
+                        </div>  
+                      </div>
+                    </section> 
+                  </div>
+                  </div>
               </div>
-          </div>  
-        </div>
-      </section>  
+            </section>
+            </div>
+     
      
       </>
       )}

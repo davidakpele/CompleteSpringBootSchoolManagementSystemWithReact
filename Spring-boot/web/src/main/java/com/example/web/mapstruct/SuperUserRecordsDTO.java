@@ -1,6 +1,8 @@
 package com.example.web.mapstruct;
 
 import com.example.web.model.StudentRecords;
+import com.example.web.model.SuperUserRecords;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
@@ -21,19 +23,20 @@ public class SuperUserRecordsDTO {
     private String gender;
     private String mobile;
     private String dateOfBirth;
-    private String role;
     private String photoUrl;
 
-    public static SuperUserRecordsDTO fromEntity(SuperUserRecordsDTO studentRecordsDTOs) {
+    @JsonBackReference
+    private SuperUsersDTO superUsersDTO;
+    
+    public static SuperUserRecordsDTO fromEntity(SuperUserRecords records) {
         SuperUserRecordsDTO SuperUserRecordsDTO = new SuperUserRecordsDTO();
-        SuperUserRecordsDTO.setId(studentRecordsDTOs.getId());
-        SuperUserRecordsDTO.setFirstname(studentRecordsDTOs.getFirstname());
-        SuperUserRecordsDTO.setSurname(studentRecordsDTOs.getSurname());
-        SuperUserRecordsDTO.setGender(studentRecordsDTOs.getGender());
-        SuperUserRecordsDTO.setMobile(studentRecordsDTOs.getMobile());
-        SuperUserRecordsDTO.setDateOfBirth(studentRecordsDTOs.getDateOfBirth());
-        SuperUserRecordsDTO.setRole(studentRecordsDTOs.getRole());
-        SuperUserRecordsDTO.setPhotoUrl(studentRecordsDTOs.getPhotoUrl());
-        return studentRecordsDTOs;
+        SuperUserRecordsDTO.setId(records.getId());
+        SuperUserRecordsDTO.setFirstname(records.getFirstname());
+        SuperUserRecordsDTO.setSurname(records.getSurname());
+        SuperUserRecordsDTO.setGender(records.getGender());
+        SuperUserRecordsDTO.setMobile(records.getMobile());
+        SuperUserRecordsDTO.setDateOfBirth(records.getDateOfBirth());
+        SuperUserRecordsDTO.setPhotoUrl(records.getPhotoUrl());
+        return SuperUserRecordsDTO;
     }
 }

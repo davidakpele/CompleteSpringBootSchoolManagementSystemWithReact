@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-
 import $ from 'jquery';
 import DataTable from 'datatables.net-dt';
 import 'datatables.net-dt/css/jquery.dataTables.css'
@@ -11,12 +10,13 @@ import { Link } from "react-router-dom"
 import Swal from 'sweetalert2';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Nav from './components/Header/Nav/NavScroll';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
+import HeaderNav from './components/Header/Nav/HeaderNav';
+import Aside from './components/Header/Menu/Aside';
 
 const SemesterList = () => {
     const tableRef = useRef([]);
@@ -33,6 +33,7 @@ const SemesterList = () => {
         class: '',
     });
     const [semester, setSemester] = useState({
+        SemesterId:'',
         ClassVal : '',
         Classname1 : '',
         Classname2 : '',
@@ -80,28 +81,63 @@ const SemesterList = () => {
         window.removeEventListener('resize', handleResize);
         };
     }, []);
-  
 
     const HandleEditClass = async (id) => {
-        const response = await ApiServices.getSemesterById(id);
-        if (response.status == 200) {
-            const data = response.data;
+        const getAllClassList = await ApiServices.getAllClasses();
+        const getSemesterResponse = await ApiServices.getSemesterById(id);
+        if (getSemesterResponse.status == 200) {
+            const semesterdata = getSemesterResponse.data;
+            const classList =getAllClassList.data
             setShowEditForm(true);
             setEditModal(true)
-            var InClass = "";
+            var InSemesterBlock = "";
             var InParent = "";
-            setEditSemesterData(data)
+            if (semesterdata.parent===1) {
+                InParent = "FIRST SEMESTER"
+            } else {
+                InParent = "SECOND SEMESTER"
+            }
+            InSemesterBlock = '(' + semesterdata.classId + '00L)' 
+            const resultString = semesterdata.title.slice(6);
+            setSemester((prevSemester) => ({
+                ...prevSemester,
+                SemesterId:id,
+                ClassVal: semesterdata.classId,
+                Classname1: InSemesterBlock,
+                Classname2: resultString,
+                CombinedData: InSemesterBlock + InParent,
+            }));
+            setApiData(classList)
+            setEditSemesterData(semesterdata)
         }
-        console.log(semester);
     }
 
     const HandleSaveEditClassData = () => {
         let errors = {};
-        if (!semesterApiData.title) {
-            errors.title = 'Semester Name field is required';
+        if (!semester.ClassVal) {
+            errors.ClassVal = 'Select class field.!';
         }
-        if (semesterApiData.title && semesterApiData.title != "") {
-            const data = {"semesterName":semesterApiData.title, "id":semesterApiData.id}
+        if (!semester.Classname1) {
+            errors.Classname1 = 'Select semester field.!';
+        }
+        if (!semester.Classname2) {
+            errors.Classname2 = 'Required!';
+        }
+        if (!semester.CombinedData) {
+            errors.CombinedData = 'Required!';
+        }
+        
+        var parent = "";
+        if (semester.ClassVal && semester.ClassVal != ""
+            && semester.Classname1 && semester.Classname1 != ""
+            && semester.Classname2 && semester.Classname2 != ""
+            && semester.CombinedData && semester.CombinedData != "") {
+            if (semester.Classname2 =='FIRST SEMESTER') {
+                parent = 1;
+            }else if (semester.Classname2 =='SECOND SEMESTER') {
+                parent = 2;
+            }
+            const data = {id:semester.SemesterId, "classId": semester.ClassVal, "parent": parent, "title": semester.CombinedData }
             FireEditData({data})
         }
         return errors;
@@ -161,6 +197,7 @@ const SemesterList = () => {
         setEditModal(false);
         setShowEditForm(false);
         setFormErrors("")
+        setSemester("")
     }
 
     const OpenCreateNewClassModal = async() => {
@@ -257,6 +294,25 @@ const SemesterList = () => {
         }
     }
 
+    const OnEditChangeClassOption = (e) => {
+        const { name, value } = e.target;
+        let Classname1 = $("#Classname1").val();
+        if (value == "") {
+            $("#CombinedData").empty();
+            $("#CombinedData").val('');
+        } else {
+           setSemester((prevSemester) => ({
+            ...prevSemester,
+            Classname2: value,
+            }));
+           setSemester((prevSemester) => ({
+            ...prevSemester,
+            CombinedData: Classname1 + value,
+           }));
+        }
+        
+    }
+
     const OnChangeClassOption = (e) => {
         const { name, value } = e.target;
         let Classname1 = $("#Classname1").val();
@@ -271,16 +327,12 @@ const SemesterList = () => {
            setSemester((prevSemester) => ({
             ...prevSemester,
             CombinedData: Classname1 + value,
-            }));
+           }));
         }
+        
     }
 
-    const OnChangeEditInput = (e) => {
-        const { name, value } = e.target;
-        setSemesterApiData({...semesterApiData, [name] : value});
-    };
     
-
     const columns = [
         { header: 'S/N', accessorKey: 'id', Cell: ({ row }) => <div>{row.index + 1}</div> },
         {header: 'Semester', accessorKey: 'title'},
@@ -304,8 +356,8 @@ const SemesterList = () => {
     return (
       <>
     <ToastContainer />
-      <Nav />
-      
+        <HeaderNav />
+        <Aside />
       {
         loading ? (
             <>
@@ -316,131 +368,148 @@ const SemesterList = () => {
               
         ) : (
             <>
-            <section className="content container-fluid">
-                <div className="box">
-                    <div className="box-header with-border">
-                        <h3 className="box-title">Master Data</h3>
-                        <div className="box-tools pull-right">
-                            <button type="button" className="btn btn-box-tool" data-widget="collapse">
-                                <i className="fa fa-minus"></i>
-                            </button>
-                        </div>
-                        <div className="box-body">
-                            <div className="mt-2 mb-4">
-                                <button onClick={OpenCreateNewClassModal} type="button" className="btn btn-sm bg-blue btn-flat"><i className="fa fa-plus"></i> Add Data</button>
-                                <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
-                                    <button id="delete__Btn" className="mr-4 btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
-                                </div>
-                            </div>
-                            <div className={showAdditionalFields ? "":"d-flex" }>
-                                <div className="col-md-12">
-                                    <MaterialReactTable table={table} />
-                                </div>
+             <div className="content-wrapper" >
+                <section className="content  text-dark">
+                    <div className="container-fluid">
+                      <hr className="border-dark"/>
+                        <div className="row">
+                            <div className="col-12 col-sm-12 col-md-12">
+                                                    <section className="content container-fluid">
+                                    <div className="box">
+                                        <div className="box-header with-border">
+                                            <h3 className="box-title">Master Data</h3>
+                                            <div className="box-tools pull-right">
+                                                <button type="button" className="btn btn-box-tool" data-widget="collapse">
+                                                    <i className="fa fa-minus"></i>
+                                                </button>
+                                            </div>
+                                            <div className="box-body">
+                                                <div className="mt-2 mb-4">
+                                                    <button onClick={OpenCreateNewClassModal} type="button" className="btn btn-sm bg-blue btn-flat"><i className="fa fa-plus"></i> Add Data</button>
+                                                    <div className="pull-right insiderBox" id="iz" style={{ display: "none" }}>
+                                                        <button id="delete__Btn" className="mr-4 btn btn-sm btn-danger btn-flat" type="button"><i className="fa fa-trash"></i> Delete</button>
+                                                    </div>
+                                                </div>
+                                                <div className={showAdditionalFields ? "":"d-flex" }>
+                                                    <div className="col-md-12">
+                                                        <MaterialReactTable table={table} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <Modal show={show} onHide={CloseCreateNewClassModal} animation={false}>
+                                        <Modal.Header closeButton>
+                                            <Modal.Title>Add New Data</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body>
+                                            <form method="post" onSubmit={HandleCreateNewSemester}>
+                                                <div className="row">
+                                                    <div className="col-md-12">
+                                                        <div className="form-group">
+                                                            <Form.Label htmlFor="ClassVal">Class:*</Form.Label>
+                                                            <Form.Select aria-label="ClassVal" name="ClassVal"  className={`form-control ${formErrors.ClassVal ? 'is-invalid' : ''}`} defaultValue={semester.ClassVal} onChange={(e)=>OnChangeClass(e)}>
+                                                                <option>-Select-</option>
+                                                                {apiData.map((classItem) => (
+                                                                    <option key={classItem.id} value={classItem.id}>
+                                                                    {classItem.title}
+                                                                    </option>
+                                                                ))}
+                                                            </Form.Select>
+                                                            {formErrors.ClassVal && <div className="invalid-feedback">{formErrors.ClassVal}</div>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-md-6 col-sm-12 col-xs-12">
+                                                        <Form.Label htmlFor="Semester:">Semester::*</Form.Label>
+                                                        <Form.Control type="text" name="Classname1" className={`form-control ${formErrors.Classname1 ? 'is-invalid' : ''}`} defaultValue={semester.Classname1} id="Classname1"  muted readOnly disabled="disabled"/>
+                                                        {formErrors.Classname1 && <div className="invalid-feedback">{formErrors.Classname1}</div>}            
+                                                    </div>
+                                                    <div className="col-md-6 col-sm-12 col-xs-12">
+                                                        <Form.Label htmlFor="Options">Select (1) Options:*</Form.Label>
+                                                        <Form.Select aria-label="classes" name="Classname2" className={`form-control ${formErrors.Classname2 ? 'is-invalid' : ''}`}  defaultValue={semester.Classname2} id="Classname2" onChange={(e)=>OnChangeClassOption(e)}>
+                                                            <option value="">--Select--</option>
+                                                            <option value="FIRST SEMESTER">FIRST SEMESTER</option>
+                                                            <option value="SECOND SEMESTER">SECOND SEMESTER</option>
+                                                        </Form.Select>
+                                                        {formErrors.Classname2 && <div className="invalid-feedback">{formErrors.Classname2}</div>}            
+                                                    </div>
+                                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                                        <Form.Label htmlFor="CombinedData">EXPECTED OUTPUT:*</Form.Label>
+                                                        <Form.Control type="text" name="CombinedData" id="CombinedData" className={`form-control ${formErrors.CombinedData ? 'is-invalid' : ''}`} defaultValue={semester.CombinedData} readOnly disabled/>
+                                                        {formErrors.CombinedData && <div className="invalid-feedback">{formErrors.CombinedData}</div>}
+                                                    </div>
+                                                </div>
+                                            </form>   
+                                        </Modal.Body>                
+                                        <Modal.Footer>
+                                            <Button variant="primary" onClick={HandleCreateNewSemester}>Save Now</Button>
+                                        </Modal.Footer>
+                                    </Modal>
+                                    
+                                    {showEditForm && (
+                                        <>
+                                        <Modal show={showEditModal} onHide={handleClose} animation={false}>
+                                        <Modal.Header closeButton>
+                                            <Modal.Title>Add New Data</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body>
+                                            <form method="post" onSubmit={HandleSaveEditClassData}>
+                                                <div className="row">
+                                                    <div className="col-md-12">
+                                                        <div className="form-group">
+                                                            <Form.Label htmlFor="ClassVal">Class:*</Form.Label>
+                                                            <Form.Select aria-label="ClassVal" name="ClassVal" className={`form-control ${formErrors.ClassVal ? 'is-invalid' : ''}`} defaultValue={editSemesterData.classId} onChange={(e) => OnChangeClass(e)}>
+                                                                <option>-Select-</option>
+                                                                {apiData.map((classItem) => (
+                                                                    <option
+                                                                    key={classItem.id}
+                                                                    value={classItem.id}
+                                                                    selected={editSemesterData.classId == classItem.id}
+                                                                    >
+                                                                    {classItem.title}
+                                                                    </option>
+                                                                ))}
+                                                            </Form.Select>
+
+                                                            {formErrors.ClassVal && <div className="invalid-feedback">{formErrors.ClassVal}</div>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-md-6 col-sm-12 col-xs-12">
+                                                        <Form.Label htmlFor="Semester:">Semester::*</Form.Label>
+                                                        <Form.Control type="text" name="Classname1" className={`form-control ${formErrors.Classname1 ? 'is-invalid' : ''}`} defaultValue={semester.Classname1} id="Classname1"  muted readOnly disabled="disabled"/>
+                                                        {formErrors.Classname1 && <div className="invalid-feedback">{formErrors.Classname1}</div>}            
+                                                    </div>
+                                                    <div className="col-md-6 col-sm-12 col-xs-12">
+                                                        <Form.Label htmlFor="Options">Select (1) Options:*</Form.Label>
+                                                        <Form.Select aria-label="classes" name="Classname2" className={`form-control ${formErrors.Classname2 ? 'is-invalid' : ''}`}  defaultValue={semester.Classname2} id="Classname2" onChange={(e)=>OnEditChangeClassOption(e)}>
+                                                            <option value="">--Select--</option>
+                                                            <option value="FIRST SEMESTER">FIRST SEMESTER</option>
+                                                            <option value="SECOND SEMESTER">SECOND SEMESTER</option>
+                                                        </Form.Select>
+                                                        {formErrors.Classname2 && <div className="invalid-feedback">{formErrors.Classname2}</div>}            
+                                                    </div>
+                                                    <div className="col-md-12 col-sm-12 col-xs-12">
+                                                        <Form.Label htmlFor="CombinedData">EXPECTED OUTPUT:*</Form.Label>
+                                                        <Form.Control type="text" name="CombinedData" id="CombinedData" className={`form-control ${formErrors.CombinedData ? 'is-invalid' : ''}`} value={semester.CombinedData} readOnly disabled/>
+                                                        {formErrors.CombinedData && <div className="invalid-feedback">{formErrors.CombinedData}</div>}
+                                                    </div>
+                                                </div>
+                                            </form>   
+                                        </Modal.Body>                
+                                        <Modal.Footer>
+                                            <Button variant="primary" onClick={HandleSaveEditClassData}>Save Now</Button>
+                                        </Modal.Footer>
+                                    </Modal>
+                                        </>
+                                    )}
+                                </section> 
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <Modal show={show} onHide={CloseCreateNewClassModal} animation={false}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Add New Data</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <form method="post" onSubmit={HandleCreateNewSemester}>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <div className="form-group">
-                                        <Form.Label htmlFor="ClassVal">Class:*</Form.Label>
-                                        <Form.Select aria-label="ClassVal" name="ClassVal"  className={`form-control ${formErrors.ClassVal ? 'is-invalid' : ''}`} defaultValue={semester.ClassVal} onChange={(e)=>OnChangeClass(e)}>
-                                            <option>-Select-</option>
-                                            {apiData.map((classItem) => (
-                                                <option key={classItem.id} value={classItem.id}>
-                                                {classItem.title}
-                                                </option>
-                                            ))}
-                                        </Form.Select>
-                                        {formErrors.ClassVal && <div className="invalid-feedback">{formErrors.ClassVal}</div>}
-                                    </div>
-                                </div>
-                                <div className="col-md-6 col-sm-12 col-xs-12">
-                                    <Form.Label htmlFor="Semester:">Semester::*</Form.Label>
-                                    <Form.Control type="text" name="Classname1" className={`form-control ${formErrors.Classname1 ? 'is-invalid' : ''}`} defaultValue={semester.Classname1} id="Classname1"  muted readOnly disabled="disabled"/>
-                                    {formErrors.Classname1 && <div className="invalid-feedback">{formErrors.Classname1}</div>}            
-                                </div>
-                                <div className="col-md-6 col-sm-12 col-xs-12">
-                                    <Form.Label htmlFor="Options">Select (1) Options:*</Form.Label>
-                                     <Form.Select aria-label="classes" name="Classname2" className={`form-control ${formErrors.Classname2 ? 'is-invalid' : ''}`}  defaultValue={semester.Classname2} id="Classname2" onChange={(e)=>OnChangeClassOption(e)}>
-                                        <option value="">--Select--</option>
-                                        <option value="FIRST SEMESTER">FIRST SEMESTER</option>
-                                        <option value="SECOND SEMESTER">SECOND SEMESTER</option>
-                                    </Form.Select>
-                                     {formErrors.Classname2 && <div className="invalid-feedback">{formErrors.Classname2}</div>}            
-                                </div>
-                                <div className="col-md-12 col-sm-12 col-xs-12">
-                                    <Form.Label htmlFor="CombinedData">EXPECTED OUTPUT:*</Form.Label>
-                                    <Form.Control type="text" name="CombinedData" id="CombinedData" className={`form-control ${formErrors.CombinedData ? 'is-invalid' : ''}`} defaultValue={semester.CombinedData} readOnly disabled/>
-                                    {formErrors.CombinedData && <div className="invalid-feedback">{formErrors.CombinedData}</div>}
-                                </div>
-                            </div>
-                        </form>   
-                    </Modal.Body>                
-                    <Modal.Footer>
-                        <Button variant="primary" onClick={HandleCreateNewSemester}>Save Now</Button>
-                    </Modal.Footer>
-                </Modal>
-                
-                {showEditForm && (
-                    <>
-                    <Modal show={showEditModal} onHide={handleClose} animation={false}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Add New Data</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <form method="post" onSubmit={HandleSaveEditClassData}>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <div className="form-group">
-                                        <Form.Label htmlFor="ClassVal">Class:*</Form.Label>
-                                        <Form.Select aria-label="ClassVal" name="ClassVal"  className={`form-control ${formErrors.ClassVal ? 'is-invalid' : ''}`} defaultValue={semester.ClassVal} onChange={(e)=>OnChangeClass(e)}>
-                                            <option>-Select-</option>
-                                            {apiData.map((classItem) => (
-                                                <option key={classItem.id} value={classItem.id}>
-                                                {classItem.title}
-                                                </option>
-                                            ))}
-                                        </Form.Select>
-                                        {formErrors.ClassVal && <div className="invalid-feedback">{formErrors.ClassVal}</div>}
-                                    </div>
-                                </div>
-                                <div className="col-md-6 col-sm-12 col-xs-12">
-                                    <Form.Label htmlFor="Semester:">Semester::*</Form.Label>
-                                    <Form.Control type="text" name="Classname1" className={`form-control ${formErrors.Classname1 ? 'is-invalid' : ''}`} defaultValue={semester.Classname1} id="Classname1"  muted readOnly disabled="disabled"/>
-                                    {formErrors.Classname1 && <div className="invalid-feedback">{formErrors.Classname1}</div>}            
-                                </div>
-                                <div className="col-md-6 col-sm-12 col-xs-12">
-                                    <Form.Label htmlFor="Options">Select (1) Options:*</Form.Label>
-                                     <Form.Select aria-label="classes" name="Classname2" className={`form-control ${formErrors.Classname2 ? 'is-invalid' : ''}`}  defaultValue={semester.Classname2} id="Classname2" onChange={(e)=>OnChangeClassOption(e)}>
-                                        <option value="">--Select--</option>
-                                        <option value="FIRST SEMESTER">FIRST SEMESTER</option>
-                                        <option value="SECOND SEMESTER">SECOND SEMESTER</option>
-                                    </Form.Select>
-                                     {formErrors.Classname2 && <div className="invalid-feedback">{formErrors.Classname2}</div>}            
-                                </div>
-                                <div className="col-md-12 col-sm-12 col-xs-12">
-                                    <Form.Label htmlFor="CombinedData">EXPECTED OUTPUT:*</Form.Label>
-                                    <Form.Control type="text" name="CombinedData" id="CombinedData" className={`form-control ${formErrors.CombinedData ? 'is-invalid' : ''}`} defaultValue={semester.CombinedData} readOnly disabled/>
-                                    {formErrors.CombinedData && <div className="invalid-feedback">{formErrors.CombinedData}</div>}
-                                </div>
-                            </div>
-                        </form>   
-                    </Modal.Body>                
-                    <Modal.Footer>
-                        <Button variant="primary" onClick={HandleSaveEditClassData}>Save Now</Button>
-                    </Modal.Footer>
-                </Modal>
-                    </>
-                )}
-            </section>
+                </section>
+            </div>
+           
             </>
         )
     }
