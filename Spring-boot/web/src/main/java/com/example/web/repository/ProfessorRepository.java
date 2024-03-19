@@ -15,10 +15,16 @@ import java.util.Optional;
 public interface ProfessorRepository extends JpaRepository<Professors, Long> {
 
     Optional<Professors> findByAccessCode(String accessCode);
+
     Optional<Object> findByEmail(String email);
+
     long countByEmail(String email);
+
     @Query("SELECT s FROM Professors s LEFT JOIN FETCH s.professorRecords")
     List<Professors> findAllWithProfessorRecords();
+
+    @Query("SELECT s FROM Professors s WHERE s.accessCode=:accessCode AND s.features=True")
+    Optional<Professors> findByAccessCodeWhereFeaturesIsTrue(String accessCode);
 
     @Modifying
     @Query("DELETE FROM Professors s WHERE s.Id IN :id")

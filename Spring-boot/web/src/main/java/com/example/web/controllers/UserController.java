@@ -2,6 +2,7 @@ package com.example.web.controllers;
 
 import com.example.web.RequestsBody.LoginRequestBody;
 import com.example.web.RequestsBody.RegisterRequestBody;
+import com.example.web.RequestsBody.SchoolManagementAuthenticationRequestBody;
 import com.example.web.auth.AuthenticationService;
 import com.example.web.auth.VerificationTokenResult;
 import com.example.web.exceptions.ErrorResponse;
@@ -9,9 +10,14 @@ import com.example.web.model.Students;
 
 import com.example.web.repository.StudentRepository;
 import com.example.web.responses.LoginResponses;
+import com.example.web.services.ProfessorDetailsService;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +32,14 @@ public class UserController {
 
     private final AuthenticationService service;
     private final StudentRepository studentRepository;
+    private final ProfessorDetailsService professorDetailsService;
     // Regex pattern for basic email validation
     private static final String EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$";
-
-    public UserController(AuthenticationService service, StudentRepository studentRepository) {
+    
+    public UserController(AuthenticationService service, StudentRepository studentRepository, ProfessorDetailsService professorDetailsService) {
         this.service = service;
         this.studentRepository = studentRepository;
+        this.professorDetailsService = professorDetailsService;
     }
 
     @PostMapping("/register")
@@ -145,6 +153,32 @@ public class UserController {
         }
     }
 
+
+    @PostMapping("/schoolmanagement/login")
+    public ResponseEntity<?> schoolManagementAuthentication(@RequestBody SchoolManagementAuthenticationRequestBody request, HttpServletResponse response) {
+        // Check if email or password is empty
+        if (request.getAccesscode() == null || request.getAccesscode().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Access Code is required", "400"));
+        }
+        if (request.getPassword() == null || request.getPassword().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Password is required", "400"));
+        }
+        try {
+            LoginResponses responses = professorDetailsService.authenticate(request);
+            
+            // Set the token as a cookie
+            Cookie cookie = new Cookie("authToken", responses.getToken());
+            cookie.setMaxAge(24 * 60 * 60); // Set the cookie expiration time in seconds (e.g., 24 hours)
+            cookie.setPath("/"); // Set the cookie path to the root path
+            response.addCookie(cookie);
+            return ResponseEntity.ok(responses);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(
+                    "User not found with access code number: -" + request.getAccesscode(), "401"));
+        }
+    }
+
+    // Helper method to check if email already exists
     @GetMapping("/logout")
     public ResponseEntity<String> logout(HttpServletResponse response) {
         // Clear the authentication-related cookies

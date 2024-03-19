@@ -1,6 +1,9 @@
 package com.example.web.services;
 
 import com.example.web.RequestsBody.ProfessorRequestBody;
+import com.example.web.RequestsBody.SchoolManagementAuthenticationRequestBody;
+import com.example.web.config.JwtService;
+import com.example.web.controllers.AuthBaseController;
 import com.example.web.mapstruct.ProfessorWithCategoriesDTO;
 import com.example.web.mapstruct.ProfessorsDTO;
 import com.example.web.mapstruct.StudentsDTOs;
@@ -11,9 +14,16 @@ import com.example.web.model.Students;
 import com.example.web.repository.CategoriesRepository;
 import com.example.web.repository.ProfessorRecordsRepository;
 import com.example.web.repository.ProfessorRepository;
+import com.example.web.responses.LoginResponses;
+
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -31,6 +41,12 @@ public class ProfessorDetailsService implements UserDetailsService {
     private ProfessorRecordsRepository professorRecordsRepository;
     @Autowired
     private CategoriesRepository categoriesRepository;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private JwtService jwtService;
+
+    private final Logger logger = LoggerFactory.getLogger(ProfessorDetailsService.class);
     @Override
     public UserDetails loadUserByUsername(String accessCode) throws UsernameNotFoundException {
         Professors professor = professorRepository.findByAccessCode(accessCode)
@@ -131,5 +147,35 @@ public class ProfessorDetailsService implements UserDetailsService {
 
     public Optional<ProfessorRecords> findByProfessorId(Long professorId) {
         return professorRecordsRepository.findByProfessorId(professorId);
+    }
+
+    public LoginResponses authenticate(SchoolManagementAuthenticationRequestBody request) {
+         var userInfo = professorRepository.findByAccessCode(request.getAccesscode())
+                .orElseThrow(() -> new AuthenticationServiceException("User not found: " + request.getAccesscode()));
+         if (!userInfo.isFeatures()) {
+            return LoginResponses.builder()
+                     .message("Account has been disabled")
+                     .status(String.valueOf(403)) // HTTP 403 Forbidden status code
+                     .build();
+         }
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getAccesscode(),
+                        request.getPassword()
+                )
+        );
+        var user = professorRecordsRepository.findByProfessorId(userInfo.getId())
+                .orElseThrow(() -> new AuthenticationServiceException("User records not found"));
+
+        var jwtToken = jwtService.generateToken((UserDetails) userInfo);
+
+        return LoginResponses.builder()
+                .token(jwtToken)
+                .id(String.valueOf(userInfo.getId()))
+                .name(user.getFirstname())
+                .message("professor")
+                .role(String.valueOf(userInfo.getRole()))
+                .status(String.valueOf(200))
+                .build();
     }
 }

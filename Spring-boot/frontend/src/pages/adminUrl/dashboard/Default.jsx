@@ -8,6 +8,9 @@ import DepartmentImg from '../../../assets/img/dp.png'
 import CourseImg from '../../../assets/img/cs.png'
 import AnalysisImg from '../../../assets/img/piedata.png'
 import ExamImg from '../../../assets/img/exam.png'
+import FileManager from '../../../assets/img/fileManager.png'
+import EmailImg from '../../../assets/img/exam.png'
+import ZoomSchedule from '../../../assets/img/zoom.png'
 import { useEffect, useState } from 'react';
 import ApiServices from "../../../services/ApiServices"
 import HeaderNav from "./components/Header/Nav/HeaderNav"
@@ -149,8 +152,39 @@ const Default = () => {
                     </div>
                   </Link>
                 </div>
-              </div>
-              <div className="container">
+                <div className="col-12 col-sm-6 col-md-3">
+                  <Link to={"/admin/admin_file_manager"} style={{color:'#000'}}>
+                    <div className="info-box mb-3">
+                      <span className="info-box-icon elevation-1" style={{backgroundColor:'#8B008B'}}> <img src={FileManager} alt="" style={{ maxWidth: '50px' }} /></span>
+                      <div className="info-box-content">
+                        <span className="info-box-text"><br/></span>
+                        <span className="info-box-number">File Manager</span>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+                <div className="col-12 col-sm-6 col-md-3">
+                  <Link to={"/admin/admin_inbox"} style={{color:'#000'}}>
+                    <div className="info-box mb-3">
+                      <span className="info-box-icon elevation-1" style={{backgroundColor:'#9e5629'}}> <img src={EmailImg} alt="" style={{ maxWidth: '50px' }} /></span>
+                      <div className="info-box-content">
+                        <span className="info-box-text"><br/></span>
+                        <span className="info-box-number">Messages & Email</span>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+                <div className="col-12 col-sm-6 col-md-3">
+                  <Link to={"/admin/admin_zoom_schedules"} style={{color:'#000'}}>
+                    <div className="info-box mb-3">
+                      <span className="info-box-icon elevation-1" style={{backgroundColor:'#0073b7'}}> <img src={ZoomSchedule} alt="" style={{ maxWidth: '50px' }} /></span>
+                      <div className="info-box-content">
+                        <span className="info-box-text"><br/></span>
+                        <span className="info-box-number">Zoom Schedule</span>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
               </div>
             </div>
           </section>

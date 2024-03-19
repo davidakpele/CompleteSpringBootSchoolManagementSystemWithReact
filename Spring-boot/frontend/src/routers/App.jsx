@@ -21,10 +21,15 @@ import SemesterList from '../pages/adminUrl/dashboard/SemesterList';
 import CourseList from '../pages/adminUrl/dashboard/CourseList';
 import SubjectList from './../pages/adminUrl/dashboard/SubjectList';
 import UserList from './../pages/adminUrl/dashboard/UserList';
+import Login from '../pages/professorsUrl/auth/Login';
+import ManagementDefaultUrl from './../pages/professorsUrl/dashboard/Default';
+
 
 const GetUserInfo = localStorage.getItem('appData');
+const GetManagementAuthInfo = localStorage.getItem('OAappData');
 // Parse the JSON string to an object
 const ParseUserDataInfo = JSON.parse(GetUserInfo)
+const ParseManagementDataInfo = JSON.parse(GetManagementAuthInfo)
 var setVerification, UserProperty;
 // Check if the "app" property exists in the parsed object
 const AuthUser = () => {
@@ -37,7 +42,19 @@ const AuthUser = () => {
     }
 }
 
+const AuthManagement = () => {
+    if (ParseManagementDataInfo && Object.prototype.hasOwnProperty.call(ParseManagementDataInfo, 'OAuser')) {
+        // Access the "app" property
+        UserProperty = ParseManagementDataInfo.OAuser.person;
+        return UserProperty;
+    } else {
+        return null;
+    }
+}
+
 let UserAuthContext = AuthUser();
+let UserManagerContext = AuthManagement();
+
 setVerification = (
   (UserAuthContext != null && UserAuthContext !== "" && (UserAuthContext.toLowerCase() === 'student' || UserAuthContext.toUpperCase() === 'STUDENT' || UserAuthContext.toUpperCase() ==='Student')) ? 
     "STUDENT_PASS" :
@@ -78,7 +95,10 @@ const App = () => {
                 <Route path='/admin/professors' element={<AUTHENTICATED_USER><ProfessorsList /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/admin/users/:id' element={<AUTHENTICATED_USER><AdminUserList /></AUTHENTICATED_USER>}> </Route>
                 <Route path='/admin/user/list' element={<AUTHENTICATED_USER><UserList /></AUTHENTICATED_USER>}> </Route>
+                
             
+                <Route path='/schoolmanagement/' element={<PROFESSOR_AUTHORIZATION_ROUTES><ManagementDefaultUrl /></PROFESSOR_AUTHORIZATION_ROUTES>}> </Route>
+
                 {/* Authenticated Public */}
                 <Route path='/programmeEntryRequirements' element={<AUTHENTICATED_PUBLIC><ProgrammeEntryRequirements /></AUTHENTICATED_PUBLIC>}> </Route>
                 <Route path='/initialPayment' element={<AUTHENTICATED_PUBLIC><Payment /></AUTHENTICATED_PUBLIC>}> </Route>
@@ -86,9 +106,11 @@ const App = () => {
                 <Route path='/' element={<AUTHENTICATED_PUBLIC><Default /></AUTHENTICATED_PUBLIC>}></Route>
                 <Route path='/login' element={<AUTHENTICATED_PUBLIC><StudentLogin /></AUTHENTICATED_PUBLIC>}> </Route>
                 <Route path='/register' element={<AUTHENTICATED_PUBLIC><StudentRegistration /></AUTHENTICATED_PUBLIC>}> </Route>
+                <Route path='/schoolmanagement/auth/login' element={<AUTHENTICATED_PUBLIC><Login /></AUTHENTICATED_PUBLIC>}> </Route>
                 {/* Public urls */}
              
                 <Route path='/admin/auth/login' element={<PublicRoute><AdminLoginPage /></PublicRoute>}> </Route>
+                
                 
             </Routes>
         </>
@@ -123,20 +145,22 @@ function PublicRoute({ children }) {
 //         //
 //     }
 // }
-// function ProfessorRoute({ children }) {
-//     if (CURRENT_USER_TYPE == USER_TYPES.PROFESSOR_AUTHENTICATION) {
-//         return <>
-//             {children}
-//         </>
-//     } else { 
-//         //
-//     }
-// }
+function PROFESSOR_AUTHORIZATION_ROUTES({ children }) {
+    setVerification = (UserManagerContext != null && UserManagerContext !== "" && (UserManagerContext.toLowerCase() === 'professor' || UserManagerContext.toUpperCase() === 'PROFESSOR' || UserAuthContext.toUpperCase() === 'Administrator')) ? "PROFESSOR_PASS" :"ACTIVATE_PUBLIC" 
+    if (setVerification == USER_TYPES.PROFESSOR_AUTHENTICATION) {
+        return <>
+            {children}
+        </>
+    } else { 
+       return <Navigate to={'/'}/>
+    }
+}
 
 
 
 function AUTHENTICATED_USER({ children }) {
-     if (CURRENT_USER_TYPE == USER_TYPES.AUTHENTICATED_USER) {
+    setVerification = (UserAuthContext != null && UserAuthContext !== "" && (UserAuthContext.toLowerCase() === 'administrator' || UserAuthContext.toUpperCase() === 'ADMINISTRATOR' || UserAuthContext.toUpperCase() === 'Administrator')) ? "USER_ZERO" :"ACTIVATE_PUBLIC"
+     if (setVerification == USER_TYPES.AUTHENTICATED_USER) {
         return <>
             {children}
         </>

@@ -89,7 +89,7 @@ public class ApplicationConfig {
         return username.startsWith("UD49");
     }
     public boolean startWithAccessCode(String username){
-        return username.startsWith("MUC");
+        return username.startsWith("MCU");
     }
 
 }

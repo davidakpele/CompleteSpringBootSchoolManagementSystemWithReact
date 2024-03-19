@@ -113,7 +113,7 @@ class ApiServices extends Component{
                     const uid = result.data.id;
                 // Apply setCookie
                this.setCookie('jwt', token, 30);
-                this.setAppDataToLocalStorage(token, role, WhosIn, name, uid)
+                this.setAppDataToLocalStorageForUser(token, role, WhosIn, name, uid)
                     setTimeout(function () {
                         window.location.replace("/");
                     }, 0);
@@ -157,7 +157,7 @@ class ApiServices extends Component{
                     const uid = result.data.id;
                     // Apply setCookie
                     this.setCookie('jwt', token, 30);
-                    this.setAppDataToLocalStorage(token,role,WhosIn, name, uid)
+                    this.setAppDataToLocalStorageForUser(token,role,WhosIn, name, uid)
                     setTimeout(function () {
                         window.location.replace("/admin/");
                     }, 0);
@@ -952,6 +952,36 @@ class ApiServices extends Component{
         }
     }
 
+    authenticateSchoolManagement_ = async ({ ...data }) => {
+        try {
+            await api.post("/auth/schoolmanagement/login", JSON.stringify(data), {
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            }).then((result) => {
+                if (result.status == 200) {
+                    // set the user as logged in and store the token in local storage
+                    const token = result.data.token;
+                    const name = result.data.name;
+                    const WhosIn = result.data.message;
+                    const role = result.data.role;
+                    const uid = result.data.id;
+                    // Apply setCookie
+                    this.setCookie('jwt', token, 30);
+                    this.setAppDataToLocalStorageForSchoolManagement(token,role,WhosIn, name, uid)
+                    // setTimeout(function () {
+                    //     window.location.replace("/schoolmanagement/");
+                    // }, 0);
+                } else {
+                    return result;
+                }
+            }).catch((xhr, error) => {
+                return xhr.response;
+            })
+        } catch (error) {
+            console.log('Failed');
+            return error;
+        }
+    }
     setCookie=(cName, cValue, expDays)=> {
         let date = new Date();
         date.setTime(date.getTime() + (expDays * 24 * 60 * 60 * 1000));
@@ -959,7 +989,7 @@ class ApiServices extends Component{
         document.cookie = cName + "=" + cValue + "; " + expires + "; path=/";
     }
 
-    setAppDataToLocalStorage = (token, role, WhosIn, name, uid) => {
+    setAppDataToLocalStorageForUser = (token, role, WhosIn, name, uid) => {
         // Set an item in localStorage
         sessionStorage.setItem('jwt', token);
         const appData = {
@@ -980,6 +1010,29 @@ class ApiServices extends Component{
         localStorage.setItem('jwt', token);
         sessionStorage.setItem('application_', appDataString)
     }
+
+    setAppDataToLocalStorageForSchoolManagement = (token, role, WhosIn, name, uid) => {
+        // Set an item in localStorage
+        sessionStorage.setItem('token_jwt', token);
+        const appData = {
+            "OAuser": {
+                "id": uid,
+                "authUser": name,
+                "person":WhosIn,
+                "role":role,
+                "_jwt_": {
+                    "iot_pack": token,
+                }
+            },
+        };
+         // Convert the object to a JSON string
+        const appDataString = JSON.stringify(appData);
+        // Store the string in localStorage
+        localStorage.setItem('OAappData', appDataString);
+        localStorage.setItem('token_jwt', token);
+        sessionStorage.setItem('OAapplication_', appDataString)
+    }
+
 
     clearCookie = (name) => {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
