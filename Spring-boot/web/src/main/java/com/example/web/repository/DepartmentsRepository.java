@@ -11,4 +11,6 @@ public interface DepartmentsRepository extends JpaRepository<Departments, Long> 
 
     @Query("SELECT d FROM Departments d WHERE d.facultyId = :facultyId")
     List<Departments> findDepartmentsByFacultyId(@Param("facultyId") Long facultyId);
+
+    List<Departments> findByIdIn(List<Long> departmentIdList);
 }

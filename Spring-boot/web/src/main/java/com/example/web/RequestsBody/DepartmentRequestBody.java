@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class DepartmentRequestBody {
     private Long facultyId;
     private String departmentName;
+
+
 }

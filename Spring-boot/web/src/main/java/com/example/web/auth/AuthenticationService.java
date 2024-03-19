@@ -8,6 +8,7 @@ import com.example.web.RequestsBody.SuperUserAuthenticationRequest;
 import com.example.web.config.JwtService;
 import com.example.web.mapstruct.ProfessorsDTO;
 import com.example.web.mapstruct.StudentsDTOs;
+import com.example.web.mapstruct.SuperUsersDTO;
 import com.example.web.model.*;
 import com.example.web.repository.*;
 import com.example.web.responses.AuthenticationResponse;
@@ -17,15 +18,11 @@ import com.example.web.services.UniqueIdGeneratorService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,7 +30,6 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.*;
 @Lazy
 @Service
@@ -45,7 +41,6 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final VerificationTokenRepository verificationTokenRepository;
-    private final RoleRepository roleRepository;
     private final RoleService roleService;
     private final UniqueIdGeneratorService uniqueIdGeneratorService;
     private static final String FOLDER_NAME = "pl";
@@ -53,7 +48,6 @@ public class AuthenticationService {
     @Autowired
     private HttpServletRequest request;
     private Date expirationTime;
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
     private final StudentRepository studentRepository;
     private final StudentRecordsRepository studentRecordsRepository;
     private final SuperUserRepository superUserRepository;
@@ -323,7 +317,8 @@ public class AuthenticationService {
                 .token(jwtToken)
                 .id(String.valueOf(userInfo.getId()))
                 .name(user.getFirstname())
-                .message("Successful")
+                .message("administrator")
+                .role(String.valueOf(userInfo.getRole()))
                 .status(String.valueOf(200))
                 .build();
     }
@@ -412,4 +407,6 @@ public class AuthenticationService {
 
         return folderPath;
     }
+
+  
 }
